@@ -1,0 +1,18 @@
+[package]
+name = "it_learns_maze"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.14.2"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = "thin"
