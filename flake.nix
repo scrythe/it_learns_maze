@@ -16,10 +16,12 @@
       in {
         devShells.default = pkgs.mkShell {
           venvDir = ".venv";
-          packages = [pkgs.pyright] ++ (with pkgs.python3Packages; [pygame pip venvShellHook]);
+          packages = [pkgs.pyright pkgs.black] ++ (with pkgs.python3Packages; [pygame pip venvShellHook]);
+
           postShellHook = ''
             pip install neat-python
-            pip freeze  > requirements.txt
+            pip install pytest 
+            # pip freeze  > requirements.txt
           '';
         };
       }
