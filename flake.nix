@@ -15,12 +15,11 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [python3 uv];
-
+          venvDir = ".venv";
+          packages = [pkgs.pyright] ++ (with pkgs.python3Packages; [pygame pip venvShellHook]);
           postShellHook = ''
-            uv sync
-            uv tool install pyright
-            # uv pip freeze  > requirements.txt
+            pip install neat-python
+            pip freeze  > requirements.txt
           '';
         };
       }
