@@ -1,30 +1,27 @@
 {
-  description = "Bevy shell flake";
+  description = "python shell flake";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "nixpkgs";
-    };
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
+    self,
     nixpkgs,
-    fenix,
     flake-utils,
-    ...
   }:
     flake-utils.lib.eachDefaultSystem (
       system: let
-        toolchain = fenix.packages.${system}.minimal.toolchain;
         pkgs = nixpkgs.legacyPackages.${system};
       in {
-        devShells.default = pkgs.mkShell {packages = [pkgs.nodejs];};
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [python3 uv];
+
+          postShellHook = ''
+            uv sync
+            # uv pip freeze  > requirements.txt
+          '';
+        };
       }
     );
 }
