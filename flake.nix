@@ -19,6 +19,7 @@
 
           postShellHook = ''
             uv sync
+            uv tool install pyright
             # uv pip freeze  > requirements.txt
           '';
         };
