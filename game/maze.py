@@ -17,16 +17,19 @@ def create_empty_maze(maze_size):
 
 def transform_maze(maze):
     maze_size = len(maze)
+    new_maze_size = maze_size * 2 - 1
     new_maze = []
-    for _ in range(maze_size * 2 - 1):
-        row = [0] * (maze_size * 2 - 1)
+    for _ in range(new_maze_size):
+        row = [0] * (new_maze_size)
         new_maze.append(row)
     for ir, maze_row in enumerate(maze):
         for ic, maze_cell in enumerate(maze_row):
             if maze_cell[0]:  # east
                 new_maze[2 * ir][2 * ic + 1] = 1
             if maze_cell[1]:  # south
-                new_maze[2 * ir + 1][2 * ic] = 1  # east
+                new_maze[2 * ir + 1][2 * ic] = 1
+            if (2 * ir + 1) < new_maze_size and (2 * ic + 1) < new_maze_size:
+                new_maze[2 * ir + 1][2 * ic + 1] = 1  # corner
     print(new_maze)
     return new_maze
 
