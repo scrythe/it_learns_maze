@@ -20,8 +20,10 @@ screen = pygame.display.set_mode((total_width, total_height))
 #     [0, 0, 0, 1],
 # ]
 
-maze = create_empty_maze(10)
-maze = transform_maze(maze)
+# maze = create_empty_maze(maze_size)
+# maze = transform_maze(maze)
+# create_maze(10)
+maze=create_maze(maze_size)
 
 def draw_maze():
     screen.get_rect().center
