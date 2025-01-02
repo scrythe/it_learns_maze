@@ -1,14 +1,14 @@
 import pygame
 import sys
 from os import path
-
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from game import create_empty_maze
 
-maze_width = 10
+from game.maze import create_empty_maze, create_maze, transform_maze
+
+maze_size = 10
 cell_width = 50
-total_width = (maze_width * 2 + 1) * cell_width
-total_height = (maze_width * 2 + 1) * cell_width
+total_width = (maze_size * 2 + 1) * cell_width
+total_height = (maze_size * 2 + 1) * cell_width
 
 pygame.init()
 screen = pygame.display.set_mode((total_width, total_height))
@@ -21,7 +21,7 @@ screen = pygame.display.set_mode((total_width, total_height))
 # ]
 
 maze = create_empty_maze(10)
-
+maze = transform_maze(maze)
 
 def draw_maze():
     screen.get_rect().center
