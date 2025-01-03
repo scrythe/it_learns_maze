@@ -1,9 +1,5 @@
 import random
 
-# class Maze:
-#     def __init__(self):
-#         maze = []
-
 
 def create_empty_maze(maze_size):
     maze = []
@@ -31,7 +27,19 @@ def transform_maze(maze):
                 new_maze[2 * ir + 1][2 * ic] = 1
             if (2 * ir + 1) < new_maze_size and (2 * ic + 1) < new_maze_size:
                 new_maze[2 * ir + 1][2 * ic + 1] = 1  # corner
+
     return new_maze
+
+
+def add_borders(maze):
+    maze_size = len(maze)
+    new_maze_size = maze_size * 2 + 1
+    for maze_row in maze:
+        maze_row.insert(0, 1)
+        maze_row.append(1)
+    maze.insert(0, [1] * new_maze_size)
+    maze.append([1] * new_maze_size)
+    return maze
 
 
 def create_maze(maze_size):
@@ -57,17 +65,11 @@ def create_maze(maze_size):
         if x < maze_size - 1 and not maze[y][x + 1][2]:  # East
             neighbours.append(3)
 
-        # print(maze)
-
-        # print("neighbours", neighbours)
-
         if len(neighbours) == 0:
             stack.pop()
-            # print("pop")
             continue
 
         rand_i = random.randrange(0, len(neighbours))
-        # print(neighbours[rand_i])
 
         match neighbours[rand_i]:
             case 0:  # North
@@ -88,4 +90,5 @@ def create_maze(maze_size):
                 maze[y][x + 1][2] = 1
 
         visited_cells += 1
-    return transform_maze(maze)
+    maze = transform_maze(maze)
+    return add_borders(maze)

@@ -2,6 +2,7 @@ import pygame
 from pygame import sprite
 
 from game import player
+from game.maze.main import Maze
 
 
 class Game:
@@ -16,6 +17,7 @@ class Game:
         self.running = True
 
         self.players = sprite.Group()
+        self.maze = Maze(5, 50)
         self.walls = sprite.Group()
 
         self.setup()
@@ -37,5 +39,6 @@ class Game:
 
     def draw(self):
         self.screen.fill("Blue")
+        self.maze.draw(self.screen)
         self.players.draw(self.screen)
         pygame.display.update()

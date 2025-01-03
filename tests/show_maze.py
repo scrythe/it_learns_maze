@@ -1,49 +1,28 @@
 import pygame
 import sys
 from os import path
+
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from game.maze import create_empty_maze, create_maze, transform_maze
+from game.maze.create_maze import create_maze
+from game.maze.draw_maze import draw_maze
 
-maze_size = 10
+maze_size = 6
 cell_width = 50
-total_width = (maze_size * 2 + 1) * cell_width
-total_height = (maze_size * 2 + 1) * cell_width
+total_width = (maze_size * 2 + 3) * cell_width
+total_height = (maze_size * 2 + 3) * cell_width
 
 pygame.init()
 screen = pygame.display.set_mode((total_width, total_height))
 
-# maze = [
-#     [0, 0, 0, 0],
-#     [1, 1, 0, 0],
-#     [0, 0, 1, 0],
-#     [0, 0, 0, 1],
-# ]
+maze = create_maze(maze_size)
 
-# maze = create_empty_maze(maze_size)
-# maze = transform_maze(maze)
-# create_maze(10)
-maze=create_maze(maze_size)
+maze_surface = draw_maze(maze, 50)
 
-def draw_maze():
-    screen.get_rect().center
-    cell = pygame.Surface((cell_width, cell_width))
-    current_pos = [cell_width, cell_width]
-    wall = cell.__copy__()
-    cell.fill("Red")
-    wall.fill("blue")
-    for maze_row in maze:
-        current_pos[0] = cell_width
-        for maze_block in maze_row:
-            if maze_block:
-                screen.blit(cell, current_pos)
-            else:
-                screen.blit(wall, current_pos)
-            current_pos[0] += cell_width
-        current_pos[1] += cell_width
-
-
-draw_maze()
+maze_pos = maze_surface.get_rect()
+maze_pos.center = screen.get_rect().center
+screen.blit(maze_surface, maze_pos)
 
 pygame.display.update()
 x = input("Hit Enter to Exit")
