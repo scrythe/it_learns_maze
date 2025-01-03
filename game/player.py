@@ -1,18 +1,17 @@
 from pygame import sprite, rect, key
 import pygame
+import math
 
 
-class Player(sprite.Sprite):
+class Player:
     speed = 4
 
     def __init__(
         self,
-        pos,
-        radius,
-        group: sprite.Group,
+        pos: tuple[int, int],
+        radius: int,
         walls: list[pygame.Rect],
     ) -> None:
-        super().__init__(group)
         self.image = pygame.Surface((radius * 2, radius * 2))
         self.rect: rect.FRect = self.image.get_frect(center=pos)
         self.walls = walls
@@ -21,6 +20,8 @@ class Player(sprite.Sprite):
         pygame.draw.circle(self.image, "Red", (radius, radius), radius)
 
         self.direction = pygame.Vector2()
+        self.angle = 0
+        self.angle_direction = pygame.Vector2()
 
     def input(self):
         keys = key.get_pressed()
@@ -29,13 +30,26 @@ class Player(sprite.Sprite):
         if self.direction:
             self.direction = self.direction.normalize()
 
+    def input2(self):
+        keys = key.get_pressed()
+        self.angle += (keys[pygame.K_d] - keys[pygame.K_a]) / 20
+        if self.angle < 0:
+            self.angle += 2 * math.pi
+        if self.angle > 2 * math.pi:
+            self.angle -= 2 * math.pi
+        direction = keys[pygame.K_w] - keys[pygame.K_s]
+        self.angle_direction.x = math.cos(self.angle)
+        self.angle_direction.y = math.sin(self.angle)
+        self.direction.x = self.angle_direction.x * direction
+        self.direction.y = self.angle_direction.y * direction
+
     def move(self):
         self.rect.x += self.direction.x * self.speed
         self.collision(True)
         self.rect.y += self.direction.y * self.speed
         self.collision(False)
 
-    def collision(self, x_direction):
+    def collision(self, x_direction: bool):
         collision_index = self.rect.collidelist(self.walls)
         if collision_index != -1:
             collided_rect = self.walls[collision_index]
@@ -51,5 +65,11 @@ class Player(sprite.Sprite):
                     self.rect.top = collided_rect.bottom
 
     def update(self):
-        self.input()
+        self.input2()
         self.move()
+
+    def draw(self, screen: pygame.Surface):
+        end_line_x = self.rect.centerx + self.angle_direction.x * 20
+        end_line_y = self.rect.centery + self.angle_direction.y * 20
+        pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
+        screen.blit(self.image, self.rect)

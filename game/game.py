@@ -12,17 +12,18 @@ class Game:
 
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((self.TOTAL_WIDTH, self.TOTAL_HEIGHT))
+        self.maze = Maze(5, 50)
+        self.screen = pygame.display.set_mode(self.maze.image.size)
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.players = sprite.Group()
-        self.maze = Maze(5, 50)
+        self.players: list[player.Player]=[]
 
         self.setup()
 
     def setup(self):
-        player.Player((200, 200), 10, self.players, self.maze.walls)
+        entity = player.Player((200, 200), 10, self.maze.walls)
+        self.players.append(entity)
 
     def start(self):
         while self.running:
@@ -34,10 +35,11 @@ class Game:
             self.draw()
 
     def update(self):
-        self.players.update()
+        for player in self.players:
+            player.update()
 
     def draw(self):
-        self.screen.fill("Blue")
         self.maze.draw(self.screen)
-        self.players.draw(self.screen)
+        for player in self.players:
+           player.draw(self.screen)
         pygame.display.update()
