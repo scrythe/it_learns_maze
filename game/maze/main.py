@@ -11,7 +11,7 @@ class Maze:
         maze_surface_size = (len(self.maze)) * cell_width
         self.image = pygame.Surface((maze_surface_size, maze_surface_size))
         self.rect = self.image.get_rect()
-        self.maze_walls = []
+        self.walls: list[pygame.Rect] = []
         self.setup(cell_width)
 
     def setup(self, cell_width: int):
@@ -24,7 +24,7 @@ class Maze:
                 if maze_block:
                     wall = current_rect.copy()
                     self.image.blit(maze_cell, wall)
-                    self.maze_walls.append(wall)
+                    self.walls.append(wall)
                 current_rect.x += cell_width
             current_rect.y += cell_width
 

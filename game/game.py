@@ -18,12 +18,11 @@ class Game:
 
         self.players = sprite.Group()
         self.maze = Maze(5, 50)
-        self.walls = sprite.Group()
 
         self.setup()
 
     def setup(self):
-        player.Player((200, 200), 20, self.players, self.walls)
+        player.Player((200, 200), 10, self.players, self.maze.walls)
 
     def start(self):
         while self.running:
