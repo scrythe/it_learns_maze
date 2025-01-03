@@ -1,4 +1,7 @@
 import pygame
+from pygame import sprite
+
+from game import player
 
 
 class Game:
@@ -8,17 +11,31 @@ class Game:
 
     def __init__(self):
         pygame.init()
-        pygame.display.set_mode((self.TOTAL_WIDTH, self.TOTAL_HEIGHT))
-        self.clock = pygame.time.Clock
+        self.screen = pygame.display.set_mode((self.TOTAL_WIDTH, self.TOTAL_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.running = True
+
+        self.players = sprite.Group()
+        self.walls = sprite.Group()
+
+        self.setup()
+
+    def setup(self):
+        player.Player((200, 200), 20, self.players, self.walls)
 
     def start(self):
-        while True:
+        while self.running:
+            self.clock.tick(self.FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
             self.update()
             self.draw()
-            pygame.time.Clock().tick(5)
 
     def update(self):
-        pass
+        self.players.update()
 
     def draw(self):
+        self.screen.fill("Blue")
+        self.players.draw(self.screen)
         pygame.display.update()
