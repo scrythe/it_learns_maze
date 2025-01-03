@@ -42,10 +42,10 @@ def add_borders(maze):
     return maze
 
 
-def create_maze(maze_size):
-    stack = []
+def create_maze(maze_size: int):
+    stack: list[tuple[int, int]] = []
     visited_cells = 1
-    stack.append([0, 0])
+    stack.append((0, 0))
     maze = create_empty_maze(maze_size)
     maze_cells_amount = pow(maze_size, 2)
     maze[0][0][2] = 1
@@ -73,19 +73,19 @@ def create_maze(maze_size):
 
         match neighbours[rand_i]:
             case 0:  # North
-                stack.append([x, y - 1])
+                stack.append((x, y - 1))
                 maze[y - 1][x][1] = 0  # South Wall
                 maze[y - 1][x][2] = 1
             case 1:  # South
-                stack.append([x, y + 1])
+                stack.append((x, y + 1))
                 maze[y][x][1] = 0  # South Wall
                 maze[y + 1][x][2] = 1
             case 2:  # West
-                stack.append([x - 1, y])
+                stack.append((x - 1, y))
                 maze[y][x - 1][0] = 0  # East Wall
                 maze[y][x - 1][2] = 1
             case 3:  # East
-                stack.append([x + 1, y])
+                stack.append((x + 1, y))
                 maze[y][x][0] = 0  # East Wall
                 maze[y][x + 1][2] = 1
 

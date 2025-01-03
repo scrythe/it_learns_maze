@@ -1,6 +1,8 @@
-from pygame import sprite, rect, key
+from pygame import rect, key
 import pygame
 import math
+
+import game
 
 
 class Player:
@@ -21,7 +23,9 @@ class Player:
 
         self.direction = pygame.Vector2()
         self.angle = 0
+        self.angle = 3 / 2 * math.pi
         self.angle_direction = pygame.Vector2()
+        self.ray = (0, 0)
 
     def input(self):
         keys = key.get_pressed()
@@ -42,6 +46,9 @@ class Player:
         self.angle_direction.y = math.sin(self.angle)
         self.direction.x = self.angle_direction.x * direction
         self.direction.y = self.angle_direction.y * direction
+
+    def raycast(self, maze):
+        self.ray = game.raycast(maze, self)
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
@@ -64,12 +71,15 @@ class Player:
                 else:
                     self.rect.top = collided_rect.bottom
 
-    def update(self):
+    def update(self, maze):
+        # self.input()
         self.input2()
         self.move()
+        self.raycast(maze)
 
     def draw(self, screen: pygame.Surface):
         end_line_x = self.rect.centerx + self.angle_direction.x * 20
         end_line_y = self.rect.centery + self.angle_direction.y * 20
         pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
+        pygame.draw.line(screen, "Green", self.rect.center, self.ray, 2)
         screen.blit(self.image, self.rect)
