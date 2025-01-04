@@ -7,6 +7,8 @@ import game
 
 class Player:
     speed = 4
+    fov = 30
+    rays_amount = 30
 
     def __init__(
         self,
@@ -25,7 +27,7 @@ class Player:
         self.angle = 0
         self.angle = math.pi
         self.angle_direction = pygame.Vector2()
-        self.rays: list[tuple[float, float]] = []
+        self.rays: list[tuple[float, float, float]] = []
 
     def input(self):
         keys = key.get_pressed()
@@ -48,7 +50,7 @@ class Player:
         self.direction.y = self.angle_direction.y * direction
 
     def raycasting(self, maze):
-        self.rays = game.raycasting(maze, self,90,10)
+        self.rays = game.raycasting(maze, self, self.fov, self.rays_amount)
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
@@ -79,8 +81,24 @@ class Player:
 
     def draw_rays(self, screen: pygame.Surface):
         for ray in self.rays:
-            pygame.draw.line(screen, "Green", self.rect.center, ray, 2)
+            pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
 
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
         self.draw_rays(screen)
+
+    def draw_3D(self, screen: pygame.Surface, box_size: int, cell_width: int):
+        line_width = int(box_size / self.rays_amount)
+        current_x = box_size + line_width / 2
+        for ray in self.rays:
+            length = box_size / ray[2] * cell_width
+            length = min(length, box_size)
+            print(ray[2])
+            pygame.draw.line(
+                screen,
+                "Green",
+                (current_x, box_size / 2 - length / 2),
+                (current_x, box_size / 2 + length / 2),
+                line_width,
+            )
+            current_x += line_width

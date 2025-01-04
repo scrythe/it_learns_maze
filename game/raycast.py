@@ -19,7 +19,6 @@ def raycast_horizontal(
         return (0, 0, maze_width)
     inverse_tan = 1 / math.tan(angle)
 
-
     if angle > math.pi:  # forward
         ray_y = math.floor(rect.centery / cell_width) * cell_width - 0.0001
         ray_sin = rect.centery - ray_y
@@ -108,18 +107,25 @@ def raycast(maze: game.Maze, player: game.Player, angle: float):
     ray_h = raycast_horizontal(maze.maze, maze.cell_width, player.rect, angle)
     ray_v = raycast_vertical(maze.maze, maze.cell_width, player.rect, angle)
     ray = min(ray_h, ray_v, key=lambda ray: ray[2])
-    return (ray[0], ray[1])
+    return ray
 
 
 def raycasting(maze: game.Maze, player: game.Player, fov, amount):
     fov_rad = math.radians(fov)
     fov_step = fov_rad / amount
-    rays: list[tuple[float, float]] = []
+    rays: list[tuple[float, float, float]] = []
     for current_step in range(amount):
         angle = player.angle - fov_rad / 2 + fov_step * current_step
         if angle < 0:
             angle += 2 * math.pi
         if angle > 2 * math.pi:
             angle -= 2 * math.pi
-        rays.append(raycast(maze, player, angle))
+        ray = raycast(maze, player, angle)
+        no_fish_angle = player.angle - angle
+        if no_fish_angle < 0:
+            no_fish_angle += 2 * math.pi
+        if no_fish_angle > 2 * math.pi:
+            no_fish_angle -= 2 * math.pi
+        no_fish_length = math.cos(no_fish_angle)*ray[2]
+        rays.append((ray[0],ray[1],no_fish_length))
     return rays
