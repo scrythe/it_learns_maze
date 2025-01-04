@@ -23,7 +23,7 @@ class Player:
 
         self.direction = pygame.Vector2()
         self.angle = 0
-        self.angle = 3 / 2 * math.pi
+        self.angle = math.pi
         self.angle_direction = pygame.Vector2()
         self.ray = (0, 0)
 

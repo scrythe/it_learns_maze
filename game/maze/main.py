@@ -26,5 +26,13 @@ class Maze:
                 current_rect.x += cell_width
             current_rect.y += cell_width
 
+        for i in range(len(self.maze) + 1):
+            pygame.draw.line(
+                self.image, "Gray", (0, 50 * i), (self.image.width, 50 * i), 2
+            )  # Vertical Line
+            pygame.draw.line(
+                self.image, "Gray", (50 * i, 0), (50 * i, self.image.width), 2
+            )  # Horizontal Line
+
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
