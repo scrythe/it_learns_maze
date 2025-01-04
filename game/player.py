@@ -80,6 +80,12 @@ class Player:
     def draw(self, screen: pygame.Surface):
         end_line_x = self.rect.centerx + self.angle_direction.x * 20
         end_line_y = self.rect.centery + self.angle_direction.y * 20
-        pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
-        pygame.draw.line(screen, "Green", self.rect.center, self.ray, 2)
+        # pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
+        # ray1 = self.ray[0]
+        # ray2 = self.ray[1]
+        # pygame.draw.line(screen, "Blue", self.rect.center, (ray2[0], ray2[1]), 5)
+        pygame.draw.line(
+            screen, "Green", self.rect.center, (self.ray[0], self.ray[1]), 2
+        )
+        # pygame.draw.circle(screen, "Blue", self.rect.center, self.ray[2],1)
         screen.blit(self.image, self.rect)

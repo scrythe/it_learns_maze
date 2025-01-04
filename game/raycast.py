@@ -8,6 +8,10 @@ def raycast_horizontal(maze: game.Maze, player: game.Player):
     off_x = 0
     off_y = 0
     inverse_tan = 1 / math.tan(player.angle)
+
+    maze_size = len(maze.maze)
+    maze_width = maze_size * maze.cell_width
+
     if player.angle > math.pi:  # forward
         ray_y = (
             math.floor(player.rect.centery / maze.cell_width) * maze.cell_width - 0.0001
@@ -25,23 +29,25 @@ def raycast_horizontal(maze: game.Maze, player: game.Player):
         off_y = maze.cell_width
         off_x = off_y * inverse_tan
     else:  # left or right
-        return None
+        return (0, 0, maze_width)
 
-    maze_size = len(maze.maze)
     depth = maze_size
     while depth:
         mapx: int = int(ray_x / maze.cell_width)
         mapy: int = int((ray_y / maze.cell_width))
         inside_maze = (mapx < maze_size) and (mapx >= 0)
         if not inside_maze:
-            return None
+            return (0, 0, maze_width)
         wall = maze.maze[mapy][mapx]
         if wall:
-            return (ray_x, ray_y)
+            ray_len_x = player.rect.centerx - ray_x
+            ray_len_y = player.rect.centery - ray_y
+            ray_len = math.sqrt(math.pow(ray_len_x, 2) + math.pow(ray_len_y, 2))
+            return (ray_x, ray_y, ray_len)
         ray_x += off_x
         ray_y += off_y
         depth -= 1
-    return (ray_x, ray_y)
+    return (0, 0, maze_width)
 
 
 def raycast_vertical(maze: game.Maze, player: game.Player):
@@ -49,6 +55,10 @@ def raycast_vertical(maze: game.Maze, player: game.Player):
     ray_y = 0
     off_x = 0
     off_y = 0
+
+    maze_size = len(maze.maze)
+    maze_width = maze_size * maze.cell_width
+
     if (player.angle > math.pi / 2) and (player.angle < 3 * math.pi / 2):  # left
         ray_x = (
             math.floor(player.rect.centerx / maze.cell_width) * maze.cell_width - 0.0001
@@ -66,26 +76,32 @@ def raycast_vertical(maze: game.Maze, player: game.Player):
         off_x = maze.cell_width
         off_y = off_x * math.tan(player.angle)
     else:  # forward or backwards
-        return None
+        return (0, 0, maze_width)
 
-    maze_size = len(maze.maze)
     depth = maze_size
     while depth:
         mapx: int = int(ray_x / maze.cell_width)
         mapy: int = int((ray_y / maze.cell_width))
         inside_maze = (mapy < maze_size) and (mapy >= 0)
         if not inside_maze:
-            return None
+            return (0, 0, maze_width)
         wall = maze.maze[mapy][mapx]
         if wall:
-            return (ray_x, ray_y)
+            ray_len_x = player.rect.centerx - ray_x
+            print(player.rect.centerx, ray_x)
+            ray_len_y = player.rect.centery - ray_y
+            ray_len = math.sqrt(math.pow(ray_len_x, 2) + math.pow(ray_len_y, 2))
+            return (ray_x, ray_y, ray_len)
+
         ray_x += off_x
         ray_y += off_y
         depth -= 1
-    return (ray_x, ray_y)
+    return (0, 0, maze_width)
 
 
 def raycast(maze: game.Maze, player: game.Player):
-    # ray = raycast_horizontal(maze, player)
-    ray = raycast_vertical(maze, player)
-    return ray if ray != None else (0, 0)
+    ray_h = raycast_horizontal(maze, player)
+    ray_v = raycast_vertical(maze, player)
+    ray = min(ray_h, ray_v, key=lambda ray: ray[2])
+    print(ray_h[2], ray_v[2], ray[2])
+    return ray
