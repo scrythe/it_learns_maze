@@ -25,7 +25,7 @@ class Player:
         self.angle = 0
         self.angle = math.pi
         self.angle_direction = pygame.Vector2()
-        self.ray = (0, 0)
+        self.rays: list[tuple[float, float]] = []
 
     def input(self):
         keys = key.get_pressed()
@@ -47,8 +47,8 @@ class Player:
         self.direction.x = self.angle_direction.x * direction
         self.direction.y = self.angle_direction.y * direction
 
-    def raycast(self, maze):
-        self.ray = game.raycast(maze, self)
+    def raycasting(self, maze):
+        self.rays = game.raycasting(maze, self,90,10)
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
@@ -75,17 +75,12 @@ class Player:
         # self.input()
         self.input2()
         self.move()
-        self.raycast(maze)
+        self.raycasting(maze)
+
+    def draw_rays(self, screen: pygame.Surface):
+        for ray in self.rays:
+            pygame.draw.line(screen, "Green", self.rect.center, ray, 2)
 
     def draw(self, screen: pygame.Surface):
-        end_line_x = self.rect.centerx + self.angle_direction.x * 20
-        end_line_y = self.rect.centery + self.angle_direction.y * 20
-        # pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
-        # ray1 = self.ray[0]
-        # ray2 = self.ray[1]
-        # pygame.draw.line(screen, "Blue", self.rect.center, (ray2[0], ray2[1]), 5)
-        pygame.draw.line(
-            screen, "Green", self.rect.center, (self.ray[0], self.ray[1]), 2
-        )
-        # pygame.draw.circle(screen, "Blue", self.rect.center, self.ray[2],1)
         screen.blit(self.image, self.rect)
+        self.draw_rays(screen)
