@@ -1,3 +1,4 @@
+import neat
 import pygame
 
 import game
@@ -11,7 +12,6 @@ class Game:
     def __init__(self):
         pygame.init()
         self.maze = game.Maze(5, 50)
-        # self.new_maze = game.Maze(5, 50)
         self.screen = pygame.display.set_mode(
             (self.maze.image.width * 2, self.maze.image.height)
         )
@@ -20,41 +20,28 @@ class Game:
 
         self.players: list[game.Player] = []
 
-        self.setup()
-
-    def setup(self):
+    def setup(self, genomes, config):
         self.maze = game.Maze(5, 50)
         posx = int(self.maze.cell_width * 1.5)
-        player = game.Player(
-            (posx, posx),
-            10,
-            self.maze.boxes,
-            self.maze.boxes_type,
-        )
-        self.players.append(player)
-
-    def start(self):
-        while self.running:
-            self.clock.tick(self.FPS)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-            self.update()
-            self.draw()
+        for genome_id, genome in genomes:
+            genome.fitness = 0
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            player = game.Player(
+                (posx, posx), 10, self.maze.boxes, self.maze.boxes_type, genome, net
+            )
+            self.players.append(player)
 
     def update(self):
-        if len(self.players) == 0:
-            self.setup()
         for i, player in enumerate(self.players):
             player.update(self.maze)
             if player.won:
                 del self.players[i]
-                return
+            return
 
     def draw(self):
         self.screen.fill("Black")
         self.maze.draw(self.screen)
         for player in self.players:
             player.draw(self.screen)
-            player.draw_3D(self.screen, self.maze.image.width, self.maze.cell_width)
+            # player.draw_3D(self.screen, self.maze.image.width, self.maze.cell_width)
         pygame.display.update()

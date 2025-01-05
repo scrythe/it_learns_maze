@@ -1,3 +1,4 @@
+import neat
 from pygame import rect, key
 import pygame
 import math
@@ -16,11 +17,16 @@ class Player:
         radius: int,
         boxes: list[pygame.Rect],
         boxes_type: list[bool],
+        genome,
+        net: neat.nn.FeedForwardNetwork,
     ) -> None:
         self.image = pygame.Surface((radius * 2, radius * 2))
         self.rect: rect.FRect = self.image.get_frect(center=pos)
         self.boxes = boxes
         self.boxes_type = boxes_type
+        self.genome = genome
+        self.net = net
+
         self.won = False
 
         self.image.set_colorkey((0, 0, 0))
@@ -31,14 +37,14 @@ class Player:
         self.angle_direction = pygame.Vector2()
         self.rays: list[tuple[float, float, float, bool]] = []
 
-    def input(self):
+    def input_wasd(self):
         keys = key.get_pressed()
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
         self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
         if self.direction:
             self.direction = self.direction.normalize()
 
-    def input2(self):
+    def input_angle(self):
         keys = key.get_pressed()
         self.angle += (keys[pygame.K_d] - keys[pygame.K_a]) / 20
         if self.angle < 0:
@@ -46,6 +52,20 @@ class Player:
         if self.angle > 2 * math.pi:
             self.angle -= 2 * math.pi
         direction = keys[pygame.K_w] - keys[pygame.K_s]
+        self.angle_direction.x = math.cos(self.angle)
+        self.angle_direction.y = math.sin(self.angle)
+        self.direction.x = self.angle_direction.x * direction
+        self.direction.y = self.angle_direction.y * direction
+
+    def ai_input(self):
+        inputs = [1] * 14
+        output = self.net.activate(inputs)
+        self.angle += output[0]
+        if self.angle < 0:
+            self.angle += 2 * math.pi
+        if self.angle > 2 * math.pi:
+            self.angle -= 2 * math.pi
+        direction = output[1]
         self.angle_direction.x = math.cos(self.angle)
         self.angle_direction.y = math.sin(self.angle)
         self.direction.x = self.angle_direction.x * direction
@@ -79,7 +99,7 @@ class Player:
                     self.rect.top = collided_rect.bottom
 
     def update(self, maze):
-        self.input2()
+        self.ai_input()
         self.move()
         self.raycasting(maze)
 
@@ -91,9 +111,8 @@ class Player:
                 pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
 
     def draw(self, screen: pygame.Surface):
-        print(self.rect)
         screen.blit(self.image, self.rect)
-        self.draw_rays(screen)
+        # self.draw_rays(screen)
 
     def draw_3D(self, screen: pygame.Surface, box_size: int, cell_width: int):
         line_width = int(box_size / self.rays_amount)
