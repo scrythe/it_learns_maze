@@ -137,5 +137,4 @@ def raycasting(maze: game.Maze, player: game.Player, fov, amount):
             no_fish_angle -= 2 * math.pi
         no_fish_length = math.cos(no_fish_angle) * ray[2]
         rays.append((ray[0], ray[1], no_fish_length, ray[3]))
-    print(see_goal / amount)
     return rays

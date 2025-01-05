@@ -14,18 +14,20 @@ class Player:
         self,
         pos: tuple[int, int],
         radius: int,
-        walls: list[pygame.Rect],
+        boxes: list[pygame.Rect],
+        boxes_type: list[bool],
     ) -> None:
         self.image = pygame.Surface((radius * 2, radius * 2))
         self.rect: rect.FRect = self.image.get_frect(center=pos)
-        self.walls = walls
+        self.boxes = boxes
+        self.boxes_type = boxes_type
+        self.won = False
 
         self.image.set_colorkey((0, 0, 0))
         pygame.draw.circle(self.image, "Red", (radius, radius), radius)
 
         self.direction = pygame.Vector2()
         self.angle = 0
-        self.angle = math.pi
         self.angle_direction = pygame.Vector2()
         self.rays: list[tuple[float, float, float, bool]] = []
 
@@ -59,9 +61,12 @@ class Player:
         self.collision(False)
 
     def collision(self, x_direction: bool):
-        collision_index = self.rect.collidelist(self.walls)
+        collision_index = self.rect.collidelist(self.boxes)
         if collision_index != -1:
-            collided_rect = self.walls[collision_index]
+            collided_box_type = self.boxes_type[collision_index]
+            if collided_box_type:
+                self.won = True
+            collided_rect = self.boxes[collision_index]
             if x_direction:
                 if self.direction.x > 0:
                     self.rect.right = collided_rect.left
@@ -74,7 +79,6 @@ class Player:
                     self.rect.top = collided_rect.bottom
 
     def update(self, maze):
-        # self.input()
         self.input2()
         self.move()
         self.raycasting(maze)
@@ -87,6 +91,7 @@ class Player:
                 pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
 
     def draw(self, screen: pygame.Surface):
+        print(self.rect)
         screen.blit(self.image, self.rect)
         self.draw_rays(screen)
 

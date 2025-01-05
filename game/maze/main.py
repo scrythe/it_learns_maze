@@ -10,12 +10,13 @@ class Maze:
         maze_surface_size = (len(self.maze)) * cell_width
         self.image = pygame.Surface((maze_surface_size, maze_surface_size))
         self.rect = self.image.get_rect()
-        self.walls: list[pygame.Rect] = []
+        self.boxes: list[pygame.Rect] = []
+        self.boxes_type: list[bool] = []
         self.setup(maze_size, cell_width)
 
     def setup(self, maze_size: int, cell_width: int):
         # self.create_start_and_end(maze_size)
-        self.maze[maze_size*2-1][maze_size*2-1]=2
+        self.maze[maze_size * 2 - 1][maze_size * 2 - 1] = 2
         maze_cell = pygame.Surface((cell_width, cell_width))
         goal = maze_cell.copy()
         goal.fill("Blue")
@@ -27,9 +28,13 @@ class Maze:
                 if maze_block == 1:
                     wall = current_rect.copy()
                     self.image.blit(maze_cell, wall)
-                    self.walls.append(wall)
+                    self.boxes.append(wall)
+                    self.boxes_type.append(False)
                 elif maze_block == 2:
+                    wall = current_rect.copy()
                     self.image.blit(goal, current_rect)
+                    self.boxes.append(wall)
+                    self.boxes_type.append(True)
                 current_rect.x += cell_width
             current_rect.y += cell_width
 

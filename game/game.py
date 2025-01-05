@@ -11,6 +11,7 @@ class Game:
     def __init__(self):
         pygame.init()
         self.maze = game.Maze(5, 50)
+        # self.new_maze = game.Maze(5, 50)
         self.screen = pygame.display.set_mode(
             (self.maze.image.width * 2, self.maze.image.height)
         )
@@ -22,8 +23,13 @@ class Game:
         self.setup()
 
     def setup(self):
+        self.maze = game.Maze(5, 50)
+        posx = int(self.maze.cell_width * 1.5)
         player = game.Player(
-            (self.maze.cell_width, self.maze.cell_width), 10, self.maze.walls
+            (posx, posx),
+            10,
+            self.maze.boxes,
+            self.maze.boxes_type,
         )
         self.players.append(player)
 
@@ -37,8 +43,13 @@ class Game:
             self.draw()
 
     def update(self):
-        for player in self.players:
+        if len(self.players) == 0:
+            self.setup()
+        for i, player in enumerate(self.players):
             player.update(self.maze)
+            if player.won:
+                del self.players[i]
+                return
 
     def draw(self):
         self.screen.fill("Black")
