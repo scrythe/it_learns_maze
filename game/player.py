@@ -17,6 +17,7 @@ class Player:
         radius: int,
         boxes: list[pygame.Rect],
         boxes_type: list[bool],
+        path_cells: list[pygame.Rect],
         genome,
         net: neat.nn.FeedForwardNetwork,
         maze_width: int,
@@ -26,6 +27,8 @@ class Player:
         self.rect: rect.FRect = self.image.get_frect(center=pos)
         self.boxes = boxes
         self.boxes_type = boxes_type
+        self.path_cells = path_cells
+        self.path_cells_score: list[int] = [0] * len(self.path_cells)
         self.genome = genome
         self.net = net
 
@@ -52,7 +55,7 @@ class Player:
     def angle_input(self):
         keys = key.get_pressed()
         # self.get_ai_input_data()
-        self.angle += (keys[pygame.K_d] - keys[pygame.K_a]) / 20
+        self.angle += (keys[pygame.K_d] - keys[pygame.K_a]) / 10
         if self.angle < 0:
             self.angle += 2 * math.pi
         if self.angle > 2 * math.pi:
@@ -124,11 +127,27 @@ class Player:
                 else:
                     self.rect.top = collided_rect.bottom
 
+    def path_collision(self):
+        collision_index = self.rect.collidelist(self.path_cells)
+        if collision_index != -1:
+            self.path_cells_score[collision_index] += 1
+
+    def calculate_fitness(self):
+        fitness = 0
+        for score in self.path_cells_score:
+            if score > 0:
+                fitness += 1/score*12
+        if self.genome.fitness:
+            self.genome.fitness+=fitness
+        else:
+            self.genome.fitness=fitness
+
     def update(self, maze):
         self.raycasting(maze)
         self.ai_input()
         # self.angle_input()
         self.move()
+        self.path_collision()
 
     def draw_rays(self, screen: pygame.Surface):
         rays = self.rays[1]

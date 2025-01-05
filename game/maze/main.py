@@ -12,6 +12,7 @@ class Maze:
         self.rect = self.image.get_rect()
         self.boxes: list[pygame.Rect] = []
         self.boxes_type: list[bool] = []
+        self.path_cells: list[pygame.Rect] = []
         self.setup(maze_size, cell_width)
 
     def setup(self, maze_size: int, cell_width: int):
@@ -35,6 +36,10 @@ class Maze:
                     self.image.blit(goal, current_rect)
                     self.boxes.append(wall)
                     self.boxes_type.append(True)
+                else:
+                    path_cell = current_rect.copy()
+                    self.path_cells.append(path_cell)
+
                 current_rect.x += cell_width
             current_rect.y += cell_width
 
