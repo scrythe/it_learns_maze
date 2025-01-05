@@ -9,7 +9,7 @@ import game
 class Player:
     speed = 4
     fov = 30
-    rays_amount = 30
+    rays_amount = 10
 
     def __init__(
         self,
@@ -19,6 +19,8 @@ class Player:
         boxes_type: list[bool],
         genome,
         net: neat.nn.FeedForwardNetwork,
+        maze_width: int,
+        cell_width: int,
     ) -> None:
         self.image = pygame.Surface((radius * 2, radius * 2))
         self.rect: rect.FRect = self.image.get_frect(center=pos)
@@ -26,6 +28,9 @@ class Player:
         self.boxes_type = boxes_type
         self.genome = genome
         self.net = net
+
+        self.maze_inside_width = maze_width - cell_width * 2
+        self.cell_width = cell_width
 
         self.won = False
 
@@ -35,17 +40,18 @@ class Player:
         self.direction = pygame.Vector2()
         self.angle = 0
         self.angle_direction = pygame.Vector2()
-        self.rays: list[tuple[float, float, float, bool]] = []
+        self.rays: tuple[float, list[tuple[float, float, float, bool]]] = (0, [])
 
-    def input_wasd(self):
+    def wasd_input(self):
         keys = key.get_pressed()
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
         self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
         if self.direction:
             self.direction = self.direction.normalize()
 
-    def input_angle(self):
+    def angle_input(self):
         keys = key.get_pressed()
+        # self.get_ai_input_data()
         self.angle += (keys[pygame.K_d] - keys[pygame.K_a]) / 20
         if self.angle < 0:
             self.angle += 2 * math.pi
@@ -57,15 +63,35 @@ class Player:
         self.direction.x = self.angle_direction.x * direction
         self.direction.y = self.angle_direction.y * direction
 
+    def get_ai_input_data(self):
+        inputs = [self.rays[0]]
+        normalised_x = (self.rect.x - self.cell_width) / (
+            self.maze_inside_width - self.rect.width
+        )
+        normalised_y = (
+            self.rect.y - self.cell_width
+        ) / self.maze_inside_width - self.rect.width
+        inputs.append(normalised_x)
+        inputs.append(normalised_y)
+        for ray in self.rays[1]:
+            normalised_ray = ray[2] / (
+                self.maze_inside_width
+            )  # when diagonal potentialn to still be above 1
+            inputs.append(normalised_ray)
+        return inputs
+
     def ai_input(self):
-        inputs = [1] * 14
+        inputs = self.get_ai_input_data()
         output = self.net.activate(inputs)
-        self.angle += output[0]
+        angle_out = (output[0] - output[1]) / 60
+        angle_out = max(angle_out, -1)
+        self.angle += min(angle_out, 1)
         if self.angle < 0:
             self.angle += 2 * math.pi
         if self.angle > 2 * math.pi:
             self.angle -= 2 * math.pi
-        direction = output[1]
+        direction = (output[2]) / 60
+        direction = min(direction, 1.0)
         self.angle_direction.x = math.cos(self.angle)
         self.angle_direction.y = math.sin(self.angle)
         self.direction.x = self.angle_direction.x * direction
@@ -99,25 +125,34 @@ class Player:
                     self.rect.top = collided_rect.bottom
 
     def update(self, maze):
-        self.ai_input()
-        self.move()
         self.raycasting(maze)
+        self.ai_input()
+        # self.angle_input()
+        self.move()
 
     def draw_rays(self, screen: pygame.Surface):
-        for ray in self.rays:
+        rays = self.rays[1]
+        for ray in rays:
             if ray[3]:
                 pygame.draw.line(screen, "Blue", self.rect.center, (ray[0], ray[1]), 2)
             else:
                 pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
 
+    def draw_look_direction(self, screen: pygame.Surface):
+        end_line_x = self.rect.centerx + self.angle_direction.x * 20
+        end_line_y = self.rect.centery + self.angle_direction.y * 20
+        pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
+
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
+        self.draw_look_direction(screen)
         # self.draw_rays(screen)
 
     def draw_3D(self, screen: pygame.Surface, box_size: int, cell_width: int):
         line_width = int(box_size / self.rays_amount)
         current_x = box_size + line_width / 2
-        for ray in self.rays:
+        rays = self.rays[1]
+        for ray in rays:
             length = box_size / ray[2] * cell_width
             length = min(length, box_size)
             if ray[3]:

@@ -1,3 +1,4 @@
+import pygame
 from game import Game
 import os
 import neat
@@ -5,8 +6,12 @@ import neat
 def eval_genomes(genomes, config):
     game.setup(genomes, config)
     while len(game.players):
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game.running = False
         game.update()
         game.draw()
+        game.clock.tick(60)
 
 
 def run(config_file: str):

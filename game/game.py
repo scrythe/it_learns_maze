@@ -23,11 +23,18 @@ class Game:
     def setup(self, genomes, config):
         self.maze = game.Maze(5, 50)
         posx = int(self.maze.cell_width * 1.5)
-        for genome_id, genome in genomes:
+        for _, genome in genomes:
             genome.fitness = 0
             net = neat.nn.FeedForwardNetwork.create(genome, config)
             player = game.Player(
-                (posx, posx), 10, self.maze.boxes, self.maze.boxes_type, genome, net
+                (posx, posx),
+                10,
+                self.maze.boxes,
+                self.maze.boxes_type,
+                genome,
+                net,
+                self.maze.image.width,
+                self.maze.cell_width,
             )
             self.players.append(player)
 
@@ -36,7 +43,7 @@ class Game:
             player.update(self.maze)
             if player.won:
                 del self.players[i]
-            return
+                return
 
     def draw(self):
         self.screen.fill("Black")

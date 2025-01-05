@@ -116,11 +116,11 @@ def raycast(maze: game.Maze, player: game.Player, angle: float):
     return ray
 
 
-def raycasting(maze: game.Maze, player: game.Player, fov, amount):
+def raycasting(maze: game.Maze, player: game.Player, fov:int, amount:int):
     fov_rad = math.radians(fov)
     fov_step = fov_rad / amount
     rays: list[tuple[float, float, float, bool]] = []
-    see_goal = 0
+    see_goal_percent = 0
     for current_step in range(amount):
         angle = player.angle - fov_rad / 2 + fov_step * current_step
         if angle < 0:
@@ -129,7 +129,7 @@ def raycasting(maze: game.Maze, player: game.Player, fov, amount):
             angle -= 2 * math.pi
         ray = raycast(maze, player, angle)
         if ray[3] == True:
-            see_goal += 1
+            see_goal_percent += 1
         no_fish_angle = player.angle - angle
         if no_fish_angle < 0:
             no_fish_angle += 2 * math.pi
@@ -137,4 +137,4 @@ def raycasting(maze: game.Maze, player: game.Player, fov, amount):
             no_fish_angle -= 2 * math.pi
         no_fish_length = math.cos(no_fish_angle) * ray[2]
         rays.append((ray[0], ray[1], no_fish_length, ray[3]))
-    return rays
+    return (see_goal_percent / amount, rays)
