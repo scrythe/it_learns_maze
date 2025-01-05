@@ -45,10 +45,10 @@ class Maze:
 
         for i in range(len(self.maze) + 1):
             pygame.draw.line(
-                self.image, "Gray", (0, 50 * i), (self.image.width, 50 * i), 2
+                self.image, "Gray", (0, cell_width * i), (self.image.width, cell_width * i), 2
             )  # Vertical Line
             pygame.draw.line(
-                self.image, "Gray", (50 * i, 0), (50 * i, self.image.width), 2
+                self.image, "Gray", (cell_width * i, 0), (cell_width * i, self.image.width), 2
             )  # Horizontal Line
 
     def draw(self, screen: pygame.Surface):

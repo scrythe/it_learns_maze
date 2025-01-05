@@ -8,8 +8,8 @@ import game
 
 class Player:
     speed = 4
-    fov = 30
-    rays_amount = 10
+    fov = 45
+    rays_amount = 5
 
     def __init__(
         self,
@@ -22,6 +22,7 @@ class Player:
         net: neat.nn.FeedForwardNetwork,
         maze_width: int,
         cell_width: int,
+        best_genome: bool,
     ) -> None:
         self.image = pygame.Surface((radius * 2, radius * 2))
         self.rect: rect.FRect = self.image.get_frect(center=pos)
@@ -31,9 +32,11 @@ class Player:
         self.path_cells_score: list[int] = [0] * len(self.path_cells)
         self.genome = genome
         self.net = net
+        self.best_genome = best_genome
 
-        self.maze_inside_width = maze_width - cell_width * 2
+        self.maze_width = maze_width
         self.cell_width = cell_width
+        self.maze_inside_width = maze_width - cell_width * 2
 
         self.won = False
 
@@ -115,7 +118,9 @@ class Player:
             collided_box_type = self.boxes_type[collision_index]
             if collided_box_type:
                 self.won = True
+                self.genome.fitness += 100
             collided_rect = self.boxes[collision_index]
+            self.genome.fitness -= 0.05
             if x_direction:
                 if self.direction.x > 0:
                     self.rect.right = collided_rect.left
@@ -135,12 +140,11 @@ class Player:
     def calculate_fitness(self):
         fitness = 0
         for score in self.path_cells_score:
-            if score > 0:
-                fitness += 1/score*12
-        if self.genome.fitness:
-            self.genome.fitness+=fitness
-        else:
-            self.genome.fitness=fitness
+            if score > 250:
+                fitness -= score / 10
+            elif score > 0:
+                fitness += 1 / score * 100
+        self.genome.fitness += fitness
 
     def update(self, maze):
         self.raycasting(maze)
@@ -163,31 +167,33 @@ class Player:
         pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
 
     def draw(self, screen: pygame.Surface):
-        screen.blit(self.image, self.rect)
         self.draw_look_direction(screen)
-        # self.draw_rays(screen)
+        if self.best_genome:
+            self.draw_rays(screen)
+            self.draw_3D(screen)
+        screen.blit(self.image, self.rect)
 
-    def draw_3D(self, screen: pygame.Surface, box_size: int, cell_width: int):
-        line_width = int(box_size / self.rays_amount)
-        current_x = box_size + line_width / 2
+    def draw_3D(self, screen: pygame.Surface):
+        line_width = int(self.maze_width / self.rays_amount)
+        current_x = self.maze_width + line_width / 2
         rays = self.rays[1]
         for ray in rays:
-            length = box_size / ray[2] * cell_width
-            length = min(length, box_size)
+            length = self.maze_width / ray[2] * self.cell_width
+            length = min(length, self.maze_width)
             if ray[3]:
                 pygame.draw.line(
                     screen,
                     "Blue",
-                    (current_x, box_size / 2 - length / 2),
-                    (current_x, box_size / 2 + length / 2),
+                    (current_x, self.maze_width / 2 - length / 2),
+                    (current_x, self.maze_width / 2 + length / 2),
                     line_width,
                 )
             else:
                 pygame.draw.line(
                     screen,
                     "Green",
-                    (current_x, box_size / 2 - length / 2),
-                    (current_x, box_size / 2 + length / 2),
+                    (current_x, self.maze_width / 2 - length / 2),
+                    (current_x, self.maze_width / 2 + length / 2),
                     line_width,
                 )
             current_x += line_width

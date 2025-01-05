@@ -1,10 +1,18 @@
+from typing import Any
 import pygame
 from game import Game
 import os
 import neat
+import pickle
 
-def eval_genomes(genomes, config):
+def eval_genomes(genomes:list[Any], config):
+    for _,genome in genomes:
+        if genome.fitness== None:
+            genome.fitness = 0
+    sort_for_best_genome(genomes)
     rounds = 3
+    for _,genome in genomes:
+        genome.fitness = 0
     for _ in range(rounds):
         game.setup(genomes, config)
         while len(game.players):
@@ -12,8 +20,13 @@ def eval_genomes(genomes, config):
                     if event.type == pygame.QUIT:
                         game.running = False
             game.update()
-            # game.draw()
-            # game.clock.tick(200)
+            game.draw()
+            game.clock.tick(200)
+
+def sort_for_best_genome(genomes):
+    def sort_key_func(genome):
+        return genome[1].fitness
+    genomes.sort(key=sort_key_func)
 
 
 def run(config_file: str):
@@ -26,6 +39,7 @@ def run(config_file: str):
     )
     # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
+    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-49")
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
@@ -35,6 +49,8 @@ def run(config_file: str):
 
     # Run for up to 300 generations.
     winner = p.run(eval_genomes, 300)
+    with open("best.pickle","wb")as f:
+        pickle.dump(winner,f)
 
 
 if __name__ == "__main__":

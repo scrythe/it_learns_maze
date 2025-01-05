@@ -11,10 +11,13 @@ class Game:
 
     def __init__(self):
         pygame.init()
-        self.maze = game.Maze(5, 50)
+        self.maze = game.Maze(10, 40)
         self.screen = pygame.display.set_mode(
             (self.maze.image.width * 2, self.maze.image.height)
         )
+        # self.screen = pygame.display.set_mode(
+        #     (self.maze.image.width, self.maze.image.height)
+        # )
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -23,9 +26,13 @@ class Game:
 
     def setup(self, genomes, config):
         self.ticks = 0
-        self.maze = game.Maze(5, 50)
+        self.maze = game.Maze(10, 40)
         posx = int(self.maze.cell_width * 1.5)
-        for _, genome in genomes:
+        best_genome_id = genomes[-1][0]  # id of last genome
+        for i, genome in genomes:
+            best_genome = False
+            if i == best_genome_id:
+                best_genome = True
             net = neat.nn.FeedForwardNetwork.create(genome, config)
             player = game.Player(
                 (posx, posx),
@@ -37,14 +44,15 @@ class Game:
                 net,
                 self.maze.image.width,
                 self.maze.cell_width,
+                best_genome,
             )
             self.players.append(player)
 
     def update(self):
-        if self.ticks>1000:
+        if self.ticks > 600:
             for player in self.players:
                 player.calculate_fitness()
-            self.players=[]
+            self.players = []
 
         for i, player in enumerate(self.players):
             player.update(self.maze)
