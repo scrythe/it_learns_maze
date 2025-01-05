@@ -6,17 +6,18 @@ import game
 
 def raycast_horizontal(
     maze, cell_width: int, rect: pygame.FRect, angle: float
-) -> tuple[float, float, float]:
+) -> tuple[float, float, float, bool]:
     ray_x = 0
     ray_y = 0
     off_x = 0
     off_y = 0
+    goal = False
 
     maze_size = len(maze)
     maze_width = maze_size * cell_width
 
     if angle == 0:
-        return (0, 0, maze_width)
+        return (0, 0, maze_width, goal)
     inverse_tan = 1 / math.tan(angle)
 
     if angle > math.pi:  # forward
@@ -34,7 +35,7 @@ def raycast_horizontal(
         off_y = cell_width
         off_x = off_y * inverse_tan
     else:  # left or right
-        return (0, 0, maze_width)
+        return (0, 0, maze_width, goal)
 
     depth = maze_size
     while depth:
@@ -42,26 +43,29 @@ def raycast_horizontal(
         mapy: int = int((ray_y / cell_width))
         inside_maze = (mapx < maze_size) and (mapx >= 0)
         if not inside_maze:
-            return (0, 0, maze_width)
+            return (0, 0, maze_width, goal)
         wall = maze[mapy][mapx]
         if wall:
+            if wall == 2:
+                goal = True
             ray_len_x = rect.centerx - ray_x
             ray_len_y = rect.centery - ray_y
             ray_len = math.sqrt(math.pow(ray_len_x, 2) + math.pow(ray_len_y, 2))
-            return (ray_x, ray_y, ray_len)
+            return (ray_x, ray_y, ray_len, goal)
         ray_x += off_x
         ray_y += off_y
         depth -= 1
-    return (0, 0, maze_width)
+    return (0, 0, maze_width, goal)
 
 
 def raycast_vertical(
     maze, cell_width: int, rect: pygame.FRect, angle: float
-) -> tuple[float, float, float]:
+) -> tuple[float, float, float, bool]:
     ray_x = 0
     ray_y = 0
     off_x = 0
     off_y = 0
+    goal = False
 
     maze_size = len(maze)
     maze_width = maze_size * cell_width
@@ -81,7 +85,7 @@ def raycast_vertical(
         off_x = cell_width
         off_y = off_x * math.tan(angle)
     else:  # forward or backwards
-        return (0, 0, maze_width)
+        return (0, 0, maze_width, goal)
 
     depth = maze_size
     while depth:
@@ -89,18 +93,20 @@ def raycast_vertical(
         mapy: int = int((ray_y / cell_width))
         inside_maze = (mapy < maze_size) and (mapy >= 0)
         if not inside_maze:
-            return (0, 0, maze_width)
+            return (0, 0, maze_width, goal)
         wall = maze[mapy][mapx]
         if wall:
+            if wall == 2:
+                goal = True
             ray_len_x = rect.centerx - ray_x
             ray_len_y = rect.centery - ray_y
             ray_len = math.sqrt(math.pow(ray_len_x, 2) + math.pow(ray_len_y, 2))
-            return (ray_x, ray_y, ray_len)
+            return (ray_x, ray_y, ray_len, goal)
 
         ray_x += off_x
         ray_y += off_y
         depth -= 1
-    return (0, 0, maze_width)
+    return (0, 0, maze_width, goal)
 
 
 def raycast(maze: game.Maze, player: game.Player, angle: float):
@@ -113,7 +119,8 @@ def raycast(maze: game.Maze, player: game.Player, angle: float):
 def raycasting(maze: game.Maze, player: game.Player, fov, amount):
     fov_rad = math.radians(fov)
     fov_step = fov_rad / amount
-    rays: list[tuple[float, float, float]] = []
+    rays: list[tuple[float, float, float, bool]] = []
+    see_goal = 0
     for current_step in range(amount):
         angle = player.angle - fov_rad / 2 + fov_step * current_step
         if angle < 0:
@@ -121,11 +128,14 @@ def raycasting(maze: game.Maze, player: game.Player, fov, amount):
         if angle > 2 * math.pi:
             angle -= 2 * math.pi
         ray = raycast(maze, player, angle)
+        if ray[3] == True:
+            see_goal += 1
         no_fish_angle = player.angle - angle
         if no_fish_angle < 0:
             no_fish_angle += 2 * math.pi
         if no_fish_angle > 2 * math.pi:
             no_fish_angle -= 2 * math.pi
-        no_fish_length = math.cos(no_fish_angle)*ray[2]
-        rays.append((ray[0],ray[1],no_fish_length))
+        no_fish_length = math.cos(no_fish_angle) * ray[2]
+        rays.append((ray[0], ray[1], no_fish_length, ray[3]))
+    print(see_goal / amount)
     return rays

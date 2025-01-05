@@ -22,7 +22,9 @@ class Game:
         self.setup()
 
     def setup(self):
-        player = game.Player((200, 200), 10, self.maze.walls)
+        player = game.Player(
+            (self.maze.cell_width, self.maze.cell_width), 10, self.maze.walls
+        )
         self.players.append(player)
 
     def start(self):
@@ -43,5 +45,5 @@ class Game:
         self.maze.draw(self.screen)
         for player in self.players:
             player.draw(self.screen)
-            player.draw_3D(self.screen,self.maze.image.width,self.maze.cell_width)
+            player.draw_3D(self.screen, self.maze.image.width, self.maze.cell_width)
         pygame.display.update()

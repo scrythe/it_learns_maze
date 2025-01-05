@@ -27,7 +27,7 @@ class Player:
         self.angle = 0
         self.angle = math.pi
         self.angle_direction = pygame.Vector2()
-        self.rays: list[tuple[float, float, float]] = []
+        self.rays: list[tuple[float, float, float, bool]] = []
 
     def input(self):
         keys = key.get_pressed()
@@ -81,7 +81,10 @@ class Player:
 
     def draw_rays(self, screen: pygame.Surface):
         for ray in self.rays:
-            pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
+            if ray[3]:
+                pygame.draw.line(screen, "Blue", self.rect.center, (ray[0], ray[1]), 2)
+            else:
+                pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
 
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
@@ -93,12 +96,20 @@ class Player:
         for ray in self.rays:
             length = box_size / ray[2] * cell_width
             length = min(length, box_size)
-            print(ray[2])
-            pygame.draw.line(
-                screen,
-                "Green",
-                (current_x, box_size / 2 - length / 2),
-                (current_x, box_size / 2 + length / 2),
-                line_width,
-            )
+            if ray[3]:
+                pygame.draw.line(
+                    screen,
+                    "Blue",
+                    (current_x, box_size / 2 - length / 2),
+                    (current_x, box_size / 2 + length / 2),
+                    line_width,
+                )
+            else:
+                pygame.draw.line(
+                    screen,
+                    "Green",
+                    (current_x, box_size / 2 - length / 2),
+                    (current_x, box_size / 2 + length / 2),
+                    line_width,
+                )
             current_x += line_width
