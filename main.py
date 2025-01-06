@@ -37,8 +37,8 @@ def run(config_file: str):
         config_file,
     )
     # Create the population, which is the top-level object for a NEAT run.
-    p = neat.Population(config)
-    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-10269")
+    # p = neat.Population(config)
+    p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-1499")
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
@@ -47,7 +47,7 @@ def run(config_file: str):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 2000 generations.
-    winner = p.run(eval_genomes, 20000)
+    winner = p.run(eval_genomes, 1)
     with open("best.pickle", "wb") as f:
         pickle.dump(winner, f)
 

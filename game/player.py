@@ -46,7 +46,7 @@ class Player:
         self.direction = pygame.Vector2()
         self.angle = 0
         self.angle_direction = pygame.Vector2()
-        self.rays: tuple[float, list[tuple[float, float, float, float, bool]]] = (0, [])
+        self.rays: list[tuple[float, float, float, float, bool]] = []
 
     def wasd_input(self):
         keys = key.get_pressed()
@@ -70,17 +70,8 @@ class Player:
         self.direction.y = self.angle_direction.y * direction
 
     def get_ai_input_data(self):
-        # inputs = [self.rays[0]]
         inputs = []
-        # normalised_x = (self.rect.x - self.cell_width) / (
-        #     self.maze_inside_width - self.rect.width
-        # )
-        # normalised_y = (
-        #     self.rect.y - self.cell_width
-        # ) / self.maze_inside_width - self.rect.width
-        # inputs.append(normalised_x)
-        # inputs.append(normalised_y)
-        for ray in self.rays[1]:
+        for ray in self.rays:
             normalised_ray = ray[2] / (
                 self.maze_inside_width
             )  # when diagonal potentialn to still be above 1
@@ -164,8 +155,7 @@ class Player:
         self.life_time -= 1
 
     def draw_rays(self, screen: pygame.Surface):
-        rays = self.rays[1]
-        for ray in rays:
+        for ray in self.rays:
             if ray[3]:
                 pygame.draw.line(screen, "Blue", self.rect.center, (ray[0], ray[1]), 2)
             else:
@@ -186,8 +176,7 @@ class Player:
     def draw_3D(self, screen: pygame.Surface):
         line_width = int(self.maze_width / self.rays_amount)
         current_x = self.maze_width + line_width / 2
-        rays = self.rays[1]
-        for ray in rays:
+        for ray in self.rays:
             length = self.maze_width / ray[2] * self.cell_width
             length = min(length, self.maze_width)
             if ray[3]:
