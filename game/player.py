@@ -156,7 +156,7 @@ class Player:
 
     def draw_rays(self, screen: pygame.Surface):
         for ray in self.rays:
-            if ray[3]:
+            if ray[4]:
                 pygame.draw.line(screen, "Blue", self.rect.center, (ray[0], ray[1]), 2)
             else:
                 pygame.draw.line(screen, "Green", self.rect.center, (ray[0], ray[1]), 2)
@@ -166,20 +166,21 @@ class Player:
         end_line_y = self.rect.centery + self.angle_direction.y * 20
         pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
 
-    def draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface, maze):
         self.draw_look_direction(screen)
         if self.best_genome:
             self.draw_rays(screen)
-            self.draw_3D(screen)
+            self.draw_3D(screen, maze)
         screen.blit(self.image, self.rect)
 
-    def draw_3D(self, screen: pygame.Surface):
-        line_width = int(self.maze_width / self.rays_amount)
+    def draw_3D(self, screen: pygame.Surface, maze):
+        line_width = int(self.maze_width / self.rays_amount/40)
         current_x = self.maze_width + line_width / 2
-        for ray in self.rays:
+        rays = game.raycasting(maze, self, 90, self.rays_amount * 40)
+        for ray in rays:
             length = self.maze_width / ray[2] * self.cell_width
             length = min(length, self.maze_width)
-            if ray[3]:
+            if ray[4]:
                 pygame.draw.line(
                     screen,
                     "Blue",

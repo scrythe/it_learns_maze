@@ -72,7 +72,7 @@ def test_ai(config_file: str):
                     game.running = False
             game.update()
             game.draw()
-            game.clock.tick(200)
+            game.clock.tick(60)
         game.round = 26
 
 

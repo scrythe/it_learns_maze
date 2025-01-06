@@ -65,6 +65,5 @@ class Game:
         self.screen.fill("Black")
         self.maze.draw(self.screen)
         for player in self.players:
-            player.draw(self.screen)
-            # player.draw_3D(self.screen, self.maze.image.width, self.maze.cell_width)
+            player.draw(self.screen, self.maze)
         pygame.display.update()
