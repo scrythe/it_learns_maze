@@ -10,7 +10,7 @@ def eval_genomes(genomes:list[Any], config):
         if genome.fitness== None:
             genome.fitness = 0
     sort_for_best_genome(genomes)
-    rounds = 3
+    rounds = 1
     for _,genome in genomes:
         genome.fitness = 0
     for _ in range(rounds):
@@ -20,8 +20,8 @@ def eval_genomes(genomes:list[Any], config):
                     if event.type == pygame.QUIT:
                         game.running = False
             game.update()
-            game.draw()
-            game.clock.tick(200)
+            # game.draw()
+            # game.clock.tick(60)
 
 def sort_for_best_genome(genomes):
     def sort_key_func(genome):
@@ -39,22 +39,25 @@ def run(config_file: str):
     )
     # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
-    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-49")
+    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-999")
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(5))
+    p.add_reporter(neat.Checkpointer(1000))
 
-    # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 300)
+    # Run for up to 2000 generations.
+    winner = p.run(eval_genomes, 2000)
     with open("best.pickle","wb")as f:
         pickle.dump(winner,f)
+
 
 
 if __name__ == "__main__":
     game = Game()
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config.txt")
+    # import cProfile
+    # cProfile.run('run(config_path)')
     run(config_path)

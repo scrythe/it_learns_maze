@@ -21,6 +21,7 @@
           postShellHook = ''
             pip install neat-python
             pip install pytest 
+            pip install snakeviz
             # pip freeze  > requirements.txt
           '';
         };

@@ -8,7 +8,7 @@ import game
 
 class Player:
     speed = 4
-    fov = 45
+    fov = 180
     rays_amount = 5
 
     def __init__(
@@ -70,15 +70,16 @@ class Player:
         self.direction.y = self.angle_direction.y * direction
 
     def get_ai_input_data(self):
-        inputs = [self.rays[0]]
-        normalised_x = (self.rect.x - self.cell_width) / (
-            self.maze_inside_width - self.rect.width
-        )
-        normalised_y = (
-            self.rect.y - self.cell_width
-        ) / self.maze_inside_width - self.rect.width
-        inputs.append(normalised_x)
-        inputs.append(normalised_y)
+        # inputs = [self.rays[0]]
+        inputs = []
+        # normalised_x = (self.rect.x - self.cell_width) / (
+        #     self.maze_inside_width - self.rect.width
+        # )
+        # normalised_y = (
+        #     self.rect.y - self.cell_width
+        # ) / self.maze_inside_width - self.rect.width
+        # inputs.append(normalised_x)
+        # inputs.append(normalised_y)
         for ray in self.rays[1]:
             normalised_ray = ray[2] / (
                 self.maze_inside_width
@@ -89,19 +90,19 @@ class Player:
     def ai_input(self):
         inputs = self.get_ai_input_data()
         output = self.net.activate(inputs)
-        angle_out = (output[0] - output[1]) / 60
-        angle_out = max(angle_out, -1)
-        self.angle += min(angle_out, 1)
+        choice = output.index(max(output))
+        if choice==0:
+            self.angle -= 0.1 # left
+        else:
+            self.angle += 0.1 # right
         if self.angle < 0:
             self.angle += 2 * math.pi
         if self.angle > 2 * math.pi:
             self.angle -= 2 * math.pi
-        direction = (output[2]) / 60
-        direction = min(direction, 1.0)
         self.angle_direction.x = math.cos(self.angle)
         self.angle_direction.y = math.sin(self.angle)
-        self.direction.x = self.angle_direction.x * direction
-        self.direction.y = self.angle_direction.y * direction
+        self.direction.x = self.angle_direction.x * 1
+        self.direction.y = self.angle_direction.y * 1
 
     def raycasting(self, maze):
         self.rays = game.raycasting(maze, self, self.fov, self.rays_amount)
@@ -115,12 +116,16 @@ class Player:
     def collision(self, x_direction: bool):
         collision_index = self.rect.collidelist(self.boxes)
         if collision_index != -1:
-            collided_box_type = self.boxes_type[collision_index]
-            if collided_box_type:
-                self.won = True
-                self.genome.fitness += 100
+            is_goal = self.boxes_type[collision_index]
+            # "Dies" after collision (with reward when goal)
+            self.won = True
+            if is_goal:
+                self.genome.fitness += 1000
+            else:
+                self.genome.fitness -= 65
+            return
+
             collided_rect = self.boxes[collision_index]
-            self.genome.fitness -= 0.05
             if x_direction:
                 if self.direction.x > 0:
                     self.rect.right = collided_rect.left

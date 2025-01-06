@@ -26,7 +26,7 @@ class Game:
 
     def setup(self, genomes, config):
         self.ticks = 0
-        self.maze = game.Maze(10, 40)
+        # self.maze = game.Maze(10, 40)
         posx = int(self.maze.cell_width * 1.5)
         best_genome_id = genomes[-1][0]  # id of last genome
         for i, genome in genomes:
@@ -36,7 +36,7 @@ class Game:
             net = neat.nn.FeedForwardNetwork.create(genome, config)
             player = game.Player(
                 (posx, posx),
-                10,
+                5,
                 self.maze.boxes,
                 self.maze.boxes_type,
                 self.maze.path_cells,
@@ -52,12 +52,14 @@ class Game:
         if self.ticks > 600:
             for player in self.players:
                 player.calculate_fitness()
+                # print(player.genome.fitness)
             self.players = []
 
         for i, player in enumerate(self.players):
             player.update(self.maze)
             if player.won:
                 player.calculate_fitness()
+                # print(player.genome.fitness)
                 del self.players[i]
         self.ticks += 1
 
