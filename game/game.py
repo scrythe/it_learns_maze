@@ -8,6 +8,7 @@ class Game:
     TOTAL_WIDTH = 960
     TOTAL_HEIGHT = 720
     FPS = 60
+    ROUNDS = 25
 
     def __init__(self):
         pygame.init()
@@ -23,12 +24,15 @@ class Game:
 
         self.players: list[game.Player] = []
         self.ticks = 0
+        self.round = 0
 
-    def setup(self, genomes, config):
-        self.ticks = 0
+    def setup(self, genomes, config, best_genome):
+        if self.round > self.ROUNDS:
+            self.maze = game.Maze(10, 40)
+            self.round = 0
         # self.maze = game.Maze(10, 40)
         posx = int(self.maze.cell_width * 1.5)
-        best_genome_id = genomes[-1][0]  # id of last genome
+        best_genome_id = best_genome[0]
         for i, genome in genomes:
             best_genome = False
             if i == best_genome_id:
@@ -49,16 +53,10 @@ class Game:
             self.players.append(player)
 
     def update(self):
-        if self.ticks > 600:
-            for player in self.players:
-                player.calculate_fitness()
-                # print(player.genome.fitness)
-            self.players = []
-
         for i, player in enumerate(self.players):
             player.update(self.maze)
-            if player.won:
-                player.calculate_fitness()
+            if player.life_time <= 0:
+                # player.calculate_fitness()
                 # print(player.genome.fitness)
                 del self.players[i]
         self.ticks += 1

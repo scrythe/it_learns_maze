@@ -9,7 +9,8 @@ import game
 class Player:
     speed = 4
     fov = 180
-    rays_amount = 5
+    rays_amount = 6
+    LIFE_TIME = 40
 
     def __init__(
         self,
@@ -33,12 +34,11 @@ class Player:
         self.genome = genome
         self.net = net
         self.best_genome = best_genome
+        self.life_time = self.LIFE_TIME
 
         self.maze_width = maze_width
         self.cell_width = cell_width
         self.maze_inside_width = maze_width - cell_width * 2
-
-        self.won = False
 
         self.image.set_colorkey((0, 0, 0))
         pygame.draw.circle(self.image, "Red", (radius, radius), radius)
@@ -46,7 +46,7 @@ class Player:
         self.direction = pygame.Vector2()
         self.angle = 0
         self.angle_direction = pygame.Vector2()
-        self.rays: tuple[float, list[tuple[float, float, float, bool]]] = (0, [])
+        self.rays: tuple[float, list[tuple[float, float, float, float, bool]]] = (0, [])
 
     def wasd_input(self):
         keys = key.get_pressed()
@@ -90,26 +90,27 @@ class Player:
     def ai_input(self):
         inputs = self.get_ai_input_data()
         output = self.net.activate(inputs)
-        choice = output.index(max(output))
-        if choice==0:
-            self.angle -= 0.1 # left
-        else:
-            self.angle += 0.1 # right
+        self.angle -= 0.1  # left
+        if max(output[0], 0):  # if below 0 then 0
+            self.angle += 0.2  # right
+        direction = 0
+        if max(output[1], 0):  # if below 0 then 0
+            direction = 1  # forward
         if self.angle < 0:
             self.angle += 2 * math.pi
         if self.angle > 2 * math.pi:
             self.angle -= 2 * math.pi
         self.angle_direction.x = math.cos(self.angle)
         self.angle_direction.y = math.sin(self.angle)
-        self.direction.x = self.angle_direction.x * 1
-        self.direction.y = self.angle_direction.y * 1
+        self.direction.x = self.angle_direction.x * direction
+        self.direction.y = self.angle_direction.y * direction
 
     def raycasting(self, maze):
         self.rays = game.raycasting(maze, self, self.fov, self.rays_amount)
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
-        self.collision(True)
+        # self.collision(True)
         self.rect.y += self.direction.y * self.speed
         self.collision(False)
 
@@ -118,38 +119,41 @@ class Player:
         if collision_index != -1:
             is_goal = self.boxes_type[collision_index]
             # "Dies" after collision (with reward when goal)
-            self.won = True
             if is_goal:
                 self.genome.fitness += 1000
             else:
                 self.genome.fitness -= 65
+            self.life_time = 0
             return
-
-            collided_rect = self.boxes[collision_index]
-            if x_direction:
-                if self.direction.x > 0:
-                    self.rect.right = collided_rect.left
-                else:
-                    self.rect.left = collided_rect.right
-            else:
-                if self.direction.y > 0:
-                    self.rect.bottom = collided_rect.top
-                else:
-                    self.rect.top = collided_rect.bottom
+            # collided_rect = self.boxes[collision_index]
+            # if x_direction:
+            #     if self.direction.x > 0:
+            #         self.rect.right = collided_rect.left
+            #     else:
+            #         self.rect.left = collided_rect.right
+            # else:
+            #     if self.direction.y > 0:
+            #         self.rect.bottom = collided_rect.top
+            #     else:
+            #         self.rect.top = collided_rect.bottom
 
     def path_collision(self):
         collision_index = self.rect.collidelist(self.path_cells)
         if collision_index != -1:
+            if self.path_cells_score[collision_index] == 0:  # new cell
+                self.life_time += 20
+                self.genome.fitness += 8
             self.path_cells_score[collision_index] += 1
+            if self.path_cells_score[collision_index] > 50:
+                self.life_time = 0
+                self.genome.fitness -= 80
 
-    def calculate_fitness(self):
-        fitness = 0
-        for score in self.path_cells_score:
-            if score > 250:
-                fitness -= score / 10
-            elif score > 0:
-                fitness += 1 / score * 100
-        self.genome.fitness += fitness
+    # def calculate_fitness(self):
+    #     fitness = 0
+    #     for score in self.path_cells_score:
+    #         if score > 0:
+    #             fitness += 1 / score * 100
+    #     self.genome.fitness += fitness
 
     def update(self, maze):
         self.raycasting(maze)
@@ -157,6 +161,7 @@ class Player:
         # self.angle_input()
         self.move()
         self.path_collision()
+        self.life_time -= 1
 
     def draw_rays(self, screen: pygame.Surface):
         rays = self.rays[1]

@@ -5,28 +5,27 @@ import os
 import neat
 import pickle
 
-def eval_genomes(genomes:list[Any], config):
-    for _,genome in genomes:
-        if genome.fitness== None:
-            genome.fitness = 0
-    sort_for_best_genome(genomes)
-    rounds = 1
-    for _,genome in genomes:
-        genome.fitness = 0
-    for _ in range(rounds):
-        game.setup(genomes, config)
-        while len(game.players):
-            for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        game.running = False
-            game.update()
-            # game.draw()
-            # game.clock.tick(60)
 
-def sort_for_best_genome(genomes):
-    def sort_key_func(genome):
+def eval_genomes(genomes: list[Any], config):
+    def best_genome_max(genome):
+        if genome[1].fitness == None:
+            return -100
         return genome[1].fitness
-    genomes.sort(key=sort_key_func)
+    best_genome = max(genomes, key=best_genome_max)
+
+    print(best_genome)
+    for _, genome in genomes:
+        genome.fitness = 0
+    game.setup(genomes, config, best_genome)
+    while len(game.players):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game.running = False
+        game.update()
+        game.draw()
+        # input("")
+        game.clock.tick(60)
+    game.round += 1
 
 
 def run(config_file: str):
@@ -39,19 +38,18 @@ def run(config_file: str):
     )
     # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
-    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-999")
+    # p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-10269")
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(1000))
+    p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 2000 generations.
-    winner = p.run(eval_genomes, 2000)
-    with open("best.pickle","wb")as f:
-        pickle.dump(winner,f)
-
+    winner = p.run(eval_genomes, 20000)
+    with open("best.pickle", "wb") as f:
+        pickle.dump(winner, f)
 
 
 if __name__ == "__main__":
