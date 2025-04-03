@@ -1,36 +1,34 @@
 import neat
 import pygame
 
-import game
-
+from game.maze_renderer_with_collision import MazeRendererWithCollision
+from game.player import Player
 
 class Game:
     TOTAL_WIDTH = 960
     TOTAL_HEIGHT = 720
     FPS = 60
-    ROUNDS = 25
 
-    def __init__(self):
+    def __init__(self, max_rounds):
         pygame.init()
-        self.maze = game.Maze(10, 40)
+        self.maze = MazeRendererWithCollision(10, 40)
         self.screen = pygame.display.set_mode(
             (self.maze.image.width * 2, self.maze.image.height)
         )
-        # self.screen = pygame.display.set_mode(
-        #     (self.maze.image.width, self.maze.image.height)
-        # )
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.players: list[game.Player] = []
+        self.players: list[Player] = []
         self.ticks = 0
         self.round = 0
+        self.max_rounds = max_rounds
 
     def setup(self, genomes, config, best_genome):
-        if self.round > self.ROUNDS:
-            self.maze = game.Maze(10, 40)
+        if self.round > self.max_rounds:
+            self.maze = MazeRendererWithCollision(10, 40)
             self.round = 0
-        # self.maze = game.Maze(10, 40)
+            if self.max_rounds > 0:
+                self.max_rounds -= 0.5
         posx = int(self.maze.cell_width * 1.5)
         best_genome_id = best_genome[0]
         for i, genome in genomes:
@@ -38,7 +36,7 @@ class Game:
             if i == best_genome_id:
                 best_genome = True
             net = neat.nn.FeedForwardNetwork.create(genome, config)
-            player = game.Player(
+            player = Player(
                 (posx, posx),
                 5,
                 self.maze.boxes,
@@ -56,8 +54,7 @@ class Game:
         for i, player in enumerate(self.players):
             player.update(self.maze)
             if player.life_time <= 0:
-                # player.calculate_fitness()
-                # print(player.genome.fitness)
+                # print("fitness:", player.genome.fitness)
                 del self.players[i]
         self.ticks += 1
 

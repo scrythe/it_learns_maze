@@ -1,20 +1,20 @@
 from typing import Any
 import pygame
-from game import Game
-import os
 import neat
 import pickle
+import sys
+import argparse
+
+from game.game import Game
 
 
-def eval_genomes(genomes: list[Any], config):
-    def best_genome_max(genome):
+def eval_genomes(genomes: list[Any], config, game: Game, render: bool):
+    def best_genome_max(genome):  # Used for rendering while training
         if genome[1].fitness == None:
             return -100
         return genome[1].fitness
 
     best_genome = max(genomes, key=best_genome_max)
-
-    print(best_genome)
     for _, genome in genomes:
         genome.fitness = 0
     game.setup(genomes, config, best_genome)
@@ -23,13 +23,13 @@ def eval_genomes(genomes: list[Any], config):
             if event.type == pygame.QUIT:
                 game.running = False
         game.update()
-        game.draw()
-        # input("")
-        game.clock.tick(60)
+        if render:
+            game.draw()
+            game.clock.tick(60)
     game.round += 1
 
 
-def run(config_file: str):
+def train_ai(config_file: str, game: Game, n_gen: int, render: bool, checkpoint: str|None):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -38,22 +38,30 @@ def run(config_file: str):
         config_file,
     )
     # Create the population, which is the top-level object for a NEAT run.
-    # p = neat.Population(config)
-    p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-1499")
+    p = neat.Population(config)
+    if checkpoint:
+        p = neat.Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(5))
+    checkpointer = neat.Checkpointer(
+        generation_interval=5, filename_prefix="checkpoints/neat-checkpoint-"
+    )
+    p.add_reporter(checkpointer)
 
-    # Run for up to 2000 generations.
-    winner = p.run(eval_genomes, 1)
+    # Damit zusätzliche Parameter mitgegeben werden können
+    def execute_eval_genomes_func(genomes, config):
+        eval_genomes(genomes, config, game, render)
+
+    # Run for up to "n_gen" amount of generations.
+    winner = p.run(execute_eval_genomes_func, n_gen)
     with open("best.pickle", "wb") as f:
         pickle.dump(winner, f)
 
 
-def test_ai(config_file: str):
+def test_ai(config_file: str, game: Game):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -63,7 +71,6 @@ def test_ai(config_file: str):
     )
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
-    # input("")
     while game.running:
         game.setup([[0, winner]], config, [0])
         while len(game.players):
@@ -73,14 +80,33 @@ def test_ai(config_file: str):
             game.update()
             game.draw()
             game.clock.tick(60)
-        game.round = 26
+        game.round += 26
 
+
+def execute_train_test(
+    mode, n_gen=0, render=False, checkpoint: str | None = None, max_rounds=2
+):
+    if mode == "test":
+        game = Game(max_rounds=2)
+        test_ai("config.txt", game)
+    else:
+        game = Game(max_rounds)
+        train_ai("config.txt", game, n_gen, render, checkpoint)
+    pygame.quit()
 
 if __name__ == "__main__":
-    game = Game()
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config.txt")
-    # import cProfile
-    # cProfile.run('run(config_path)')
-    # run(config_path)
-    test_ai(config_path)
+    parser = argparse.ArgumentParser(description="Train or Test a model.")
+    parser.add_argument("--mode", type=str, required=True, choices=["train", "test"],
+                        help="Mode to run the script in: 'train' or 'test'")
+    parser.add_argument("--n_gen", type=int,
+                        help="Number of generations")
+    parser.add_argument("--render", type=lambda x: (str(x).lower() == 'true'), default=False,
+                        help="Render the game (True/False)")
+    parser.add_argument("--checkpoint", type=str, default="",
+                        help="Path to checkpoint file (optional)")
+    parser.add_argument("--max_rounds", type=int,
+                        help="Max rounds per generation")
+
+    args = parser.parse_args()
+    
+    execute_train_test(args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds)

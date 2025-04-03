@@ -3,7 +3,7 @@ from pygame import rect, key
 import pygame
 import math
 
-import game
+from game.raycast import Raycaster
 
 
 class Player:
@@ -35,6 +35,7 @@ class Player:
         self.net = net
         self.best_genome = best_genome
         self.life_time = self.LIFE_TIME
+        self.total_time = 0
 
         self.maze_width = maze_width
         self.cell_width = cell_width
@@ -74,7 +75,7 @@ class Player:
         for ray in self.rays:
             normalised_ray = ray[2] / (
                 self.maze_inside_width
-            )  # when diagonal potentialn to still be above 1
+            )  # when diagonal, potential to still be above 1
             inputs.append(normalised_ray)
         return inputs
 
@@ -97,36 +98,27 @@ class Player:
         self.direction.y = self.angle_direction.y * direction
 
     def raycasting(self, maze):
-        self.rays = game.raycasting(maze, self, self.fov, self.rays_amount)
+        self.rays = Raycaster.raycasting(
+            maze, self.rect, self.angle, self.fov, self.rays_amount
+        )
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
-        # self.collision(True)
         self.rect.y += self.direction.y * self.speed
-        self.collision(False)
+        self.collision()
 
-    def collision(self, x_direction: bool):
+    def collision(self):
         collision_index = self.rect.collidelist(self.boxes)
         if collision_index != -1:
             is_goal = self.boxes_type[collision_index]
-            # "Dies" after collision (with reward when goal)
+            # Tod nach Berührung mit Zelle. Belohnung falls Ziel und Bestrafung falls Wand.
             if is_goal:
-                self.genome.fitness += 1000
+                self.genome.fitness += 10000
+                self.genome.fitness -= self.total_time
             else:
                 self.genome.fitness -= 65
             self.life_time = 0
             return
-            # collided_rect = self.boxes[collision_index]
-            # if x_direction:
-            #     if self.direction.x > 0:
-            #         self.rect.right = collided_rect.left
-            #     else:
-            #         self.rect.left = collided_rect.right
-            # else:
-            #     if self.direction.y > 0:
-            #         self.rect.bottom = collided_rect.top
-            #     else:
-            #         self.rect.top = collided_rect.bottom
 
     def path_collision(self):
         collision_index = self.rect.collidelist(self.path_cells)
@@ -139,20 +131,13 @@ class Player:
                 self.life_time = 0
                 self.genome.fitness -= 80
 
-    # def calculate_fitness(self):
-    #     fitness = 0
-    #     for score in self.path_cells_score:
-    #         if score > 0:
-    #             fitness += 1 / score * 100
-    #     self.genome.fitness += fitness
-
     def update(self, maze):
         self.raycasting(maze)
         self.ai_input()
-        # self.angle_input()
         self.move()
         self.path_collision()
         self.life_time -= 1
+        self.total_time += 1
 
     def draw_rays(self, screen: pygame.Surface):
         for ray in self.rays:
@@ -174,11 +159,13 @@ class Player:
         screen.blit(self.image, self.rect)
 
     def draw_3D(self, screen: pygame.Surface, maze):
-        line_width = int(self.maze_width / self.rays_amount/40)
+        line_width = int(self.maze_width / self.rays_amount / 40)
         current_x = self.maze_width + line_width / 2
-        rays = game.raycasting(maze, self, 90, self.rays_amount * 40)
+        rays = Raycaster.raycasting(
+            maze, self.rect, self.angle, 90, self.rays_amount * 40
+        )
         for ray in rays:
-            length = self.maze_width / ray[2] * self.cell_width
+            length = self.maze_width / ray[3] * self.cell_width
             length = min(length, self.maze_width)
             if ray[4]:
                 pygame.draw.line(
@@ -196,4 +183,30 @@ class Player:
                     (current_x, self.maze_width / 2 + length / 2),
                     line_width,
                 )
+            current_x += line_width
+
+    def ai_view(self, screen: pygame.Surface, maze):
+        line_width = int(self.maze_width / 6)
+        current_x = self.maze_width + line_width / 2
+        rays = Raycaster.raycasting(
+            maze, self.rect, self.angle, 90, 6
+        )
+        for ray in rays:
+            length = self.maze_width / ray[2] * self.cell_width
+            length = min(length, self.maze_width)
+              # Calculate brightness (closer = brighter, farther = darker)
+
+            brightness = max(0, min(255, int(255 / (1 + ray[3] * 0.05))))
+            
+            if ray[4]:  # If hit a wall
+                color = (0, 0, brightness)  # Blue with darkness effect
+            else:
+                color = (0, brightness, 0)  # Green with darkness effect
+            pygame.draw.line(
+                screen,
+                color,
+                (current_x, 0),
+                (current_x, self.maze_width),
+                line_width,
+            )
             current_x += line_width
