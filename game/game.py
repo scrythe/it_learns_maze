@@ -4,15 +4,20 @@ import pygame
 from game.maze_renderer_with_collision import MazeRendererWithCollision
 from game.player import Player
 
+
 class Game:
-    TOTAL_WIDTH = 960
-    TOTAL_HEIGHT = 720
-    FPS = 60
+    FPS = 0
+    MAZE_SIZE = 5
 
     def __init__(self, max_rounds):
         pygame.init()
-        self.maze = MazeRendererWithCollision(10, 40)
-        self.screen = pygame.display.set_mode(
+        info = pygame.display.Info()
+        self.current_size = info.current_h
+        self.maze = MazeRendererWithCollision(self.MAZE_SIZE, 40)
+        height = info.current_h * 0.8
+
+        self.screen = pygame.display.set_mode((height * 2, height), pygame.RESIZABLE)
+        self.og_screen = pygame.Surface(
             (self.maze.image.width * 2, self.maze.image.height)
         )
         self.clock = pygame.time.Clock()
@@ -25,7 +30,7 @@ class Game:
 
     def setup(self, genomes, config, best_genome):
         if self.round > self.max_rounds:
-            self.maze = MazeRendererWithCollision(10, 40)
+            self.maze = MazeRendererWithCollision(self.MAZE_SIZE, 40)
             self.round = 0
             if self.max_rounds > 0:
                 self.max_rounds -= 0.5
@@ -59,8 +64,13 @@ class Game:
         self.ticks += 1
 
     def draw(self):
-        self.screen.fill("Black")
-        self.maze.draw(self.screen)
+        self.og_screen.fill("Black")
+        self.maze.draw(self.og_screen)
         for player in self.players:
-            player.draw(self.screen, self.maze)
+            player.draw(self.og_screen, self.maze)
+        self.screen.blit(
+            pygame.transform.scale(
+                self.og_screen, (self.screen.width, self.screen.height)
+            )
+        )
         pygame.display.update()

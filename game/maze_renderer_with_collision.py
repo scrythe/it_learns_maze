@@ -1,6 +1,6 @@
-
 from game.maze_generator import MazeGenerator, WALL, GOAL
 import pygame
+
 
 class MazeRendererWithCollision:
     def __init__(self, maze_size: int, cell_width: int):
@@ -9,12 +9,23 @@ class MazeRendererWithCollision:
         """
         self.maze = MazeGenerator.generate_maze(maze_size)
         self.cell_width = cell_width
-        maze_surface_size = len(self.maze) * cell_width # Gesamtgröße des Labyrinths in Pixeln
-        self.image = pygame.Surface((maze_surface_size, maze_surface_size)) # Erstelle eine Oberfläche für das Labyrinth
-        self.rect = self.image.get_rect() # Rechteck für das Labyrinth
-        self.boxes: list[pygame.Rect] = []  # Liste zur Speicherung der Rechtecke für Wände und Wege und für Kollision
-        self.boxes_type: list[bool] = [] # Liste, die angibt, ob eine Kollision Zelle ein Ziel ist
-        self.path_cells: list[pygame.Rect] = [] # Liste der Zellen, die als Pfad markiert sind
+        maze_surface_size = (
+            len(self.maze) * cell_width
+        )  # Gesamtgröße des Labyrinths in Pixeln
+        self.image = pygame.Surface(
+            (maze_surface_size, maze_surface_size)
+        )  # Erstelle eine Oberfläche für das Labyrinth
+        self.scaled_image = self.image
+        self.rect = self.image.get_rect()  # Rechteck für das Labyrinth
+        self.boxes: list[pygame.Rect] = (
+            []
+        )  # Liste zur Speicherung der Rechtecke für Wände und Wege und für Kollision
+        self.boxes_type: list[bool] = (
+            []
+        )  # Liste, die angibt, ob eine Kollision Zelle ein Ziel ist
+        self.path_cells: list[pygame.Rect] = (
+            []
+        )  # Liste der Zellen, die als Pfad markiert sind
         self.setup()
 
     def setup(self):
@@ -75,4 +86,3 @@ class MazeRendererWithCollision:
         Zeichnet das Labyrinth auf den angegebenen Bildschirm.
         """
         screen.blit(self.image, self.rect)
-

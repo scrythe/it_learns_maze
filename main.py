@@ -2,7 +2,6 @@ from typing import Any
 import pygame
 import neat
 import pickle
-import sys
 import argparse
 
 from game.game import Game
@@ -22,14 +21,21 @@ def eval_genomes(genomes: list[Any], config, game: Game, render: bool):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game.running = False
+            # if event.type == pygame.WINDOWRESIZED:
+            #     pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            #     game.current_size = 50
+            #     game.maze.rescale_image(event.w)
+            #     print("hm")
         game.update()
         if render:
             game.draw()
-            game.clock.tick(60)
+            game.clock.tick(game.FPS)
     game.round += 1
 
 
-def train_ai(config_file: str, game: Game, n_gen: int, render: bool, checkpoint: str|None):
+def train_ai(
+    config_file: str, game: Game, n_gen: int, render: bool, checkpoint: str | None
+):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -71,15 +77,38 @@ def test_ai(config_file: str, game: Game):
     )
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
-    while game.running:
+    resizing = False
+    RESIZE_DELAY = 200
+    resize_timer = None
+    gen=0
+    while game.running or gen > 50:
         game.setup([[0, winner]], config, [0])
+        gen+=1
         while len(game.players):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game.running = False
+                if event.type == pygame.VIDEORESIZE:
+                    resizing = True
+                    game.current_size = event.w
+                    game.maze.rescale_image(game.current_size)
+                # if resizing and event.type != pygame.VIDEORESIZE:
+                #     resizing = False
+                #     resize_timer = pygame.time.get_ticks()
+                # if (
+                #     resize_timer != None
+                #     and resize_timer + RESIZE_DELAY < pygame.time.get_ticks()
+                # ):
+                #     resize_timer = None
+                #     print(number)
+                #     number+=1
+                #     pygame.display.set_mode(
+                #         (game.current_size, game.current_size), pygame.RESIZABLE
+                #     )
+
             game.update()
             game.draw()
-            game.clock.tick(60)
+            game.clock.tick(game.FPS)
         game.round += 26
 
 
@@ -94,19 +123,32 @@ def execute_train_test(
         train_ai("config.txt", game, n_gen, render, checkpoint)
     pygame.quit()
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Train or Test a model.")
-    parser.add_argument("--mode", type=str, required=True, choices=["train", "test"],
-                        help="Mode to run the script in: 'train' or 'test'")
-    parser.add_argument("--n_gen", type=int,
-                        help="Number of generations")
-    parser.add_argument("--render", type=lambda x: (str(x).lower() == 'true'), default=False,
-                        help="Render the game (True/False)")
-    parser.add_argument("--checkpoint", type=str, default="",
-                        help="Path to checkpoint file (optional)")
-    parser.add_argument("--max_rounds", type=int,
-                        help="Max rounds per generation")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        required=True,
+        choices=["train", "test"],
+        help="Mode to run the script in: 'train' or 'test'",
+    )
+    parser.add_argument("--n_gen", type=int, help="Number of generations")
+    parser.add_argument(
+        "--render",
+        type=lambda x: (str(x).lower() == "true"),
+        default=False,
+        help="Render the game (True/False)",
+    )
+    parser.add_argument(
+        "--checkpoint", type=str, default="", help="Path to checkpoint file (optional)"
+    )
+    parser.add_argument("--max_rounds", type=int, help="Max rounds per generation")
 
     args = parser.parse_args()
-    
-    execute_train_test(args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds)
+
+    execute_train_test(
+        args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds
+    )
+
+if __name__ == "__main__":
+    main()

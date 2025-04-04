@@ -39,7 +39,7 @@ class Player:
 
         self.maze_width = maze_width
         self.cell_width = cell_width
-        self.maze_inside_width = maze_width - cell_width * 2
+        self.maze_inside_width = 840 - cell_width * 2
 
         self.image.set_colorkey((0, 0, 0))
         pygame.draw.circle(self.image, "Red", (radius, radius), radius)
@@ -134,6 +134,7 @@ class Player:
     def update(self, maze):
         self.raycasting(maze)
         self.ai_input()
+        # self.angle_input()
         self.move()
         self.path_collision()
         self.life_time -= 1
@@ -155,7 +156,8 @@ class Player:
         self.draw_look_direction(screen)
         if self.best_genome:
             self.draw_rays(screen)
-            self.draw_3D(screen, maze)
+            # self.draw_3D(screen, maze)
+            self.ai_view(screen, maze)
         screen.blit(self.image, self.rect)
 
     def draw_3D(self, screen: pygame.Surface, maze):
