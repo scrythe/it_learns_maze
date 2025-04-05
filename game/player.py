@@ -11,6 +11,7 @@ class Player:
     fov = 180
     rays_amount = 6
     LIFE_TIME = 40
+    three_d_rays_amount = 160
 
     def __init__(
         self,
@@ -156,59 +157,56 @@ class Player:
         self.draw_look_direction(screen)
         if self.best_genome:
             self.draw_rays(screen)
-            # self.draw_3D(screen, maze)
+            self.draw_3D(screen, maze)
             self.ai_view(screen, maze)
         screen.blit(self.image, self.rect)
 
     def draw_3D(self, screen: pygame.Surface, maze):
-        line_width = int(self.maze_width / self.rays_amount / 40)
-        current_x = self.maze_width + line_width / 2
+        line_width = self.maze_width * 2 / self.three_d_rays_amount
+        current_x = line_width / 2
         rays = Raycaster.raycasting(
-            maze, self.rect, self.angle, 90, self.rays_amount * 40
+            maze, self.rect, self.angle, 90, self.three_d_rays_amount
         )
         for ray in rays:
             length = self.maze_width / ray[3] * self.cell_width
             length = min(length, self.maze_width)
-            if ray[4]:
-                pygame.draw.line(
-                    screen,
-                    "Blue",
-                    (current_x, self.maze_width / 2 - length / 2),
-                    (current_x, self.maze_width / 2 + length / 2),
-                    line_width,
-                )
-            else:
-                pygame.draw.line(
-                    screen,
-                    "Green",
-                    (current_x, self.maze_width / 2 - length / 2),
-                    (current_x, self.maze_width / 2 + length / 2),
-                    line_width,
-                )
-            current_x += line_width
 
-    def ai_view(self, screen: pygame.Surface, maze):
-        line_width = int(self.maze_width / 6)
-        current_x = self.maze_width + line_width / 2
-        rays = Raycaster.raycasting(
-            maze, self.rect, self.angle, 90, 6
-        )
-        for ray in rays:
-            length = self.maze_width / ray[2] * self.cell_width
-            length = min(length, self.maze_width)
-              # Calculate brightness (closer = brighter, farther = darker)
-
-            brightness = max(0, min(255, int(255 / (1 + ray[3] * 0.05))))
-            
+            color = "Green"
             if ray[4]:  # If hit a wall
-                color = (0, 0, brightness)  # Blue with darkness effect
-            else:
-                color = (0, brightness, 0)  # Green with darkness effect
+                color = "Blue"
+
             pygame.draw.line(
                 screen,
                 color,
-                (current_x, 0),
-                (current_x, self.maze_width),
-                line_width,
+                (current_x, self.maze_width / 2 * 3 - length / 2),
+                (current_x, self.maze_width / 2 * 3 + length / 2),
+                math.ceil(line_width),
             )
+
+            current_x += line_width
+
+    def ai_view(self, screen: pygame.Surface, maze):
+        line_width = self.maze_width / self.rays_amount
+        current_x = self.maze_width + line_width / 2
+        rays = Raycaster.raycasting(maze, self.rect, self.angle, 90, self.rays_amount)
+        for ray in rays:
+            length = self.maze_width / ray[3] * self.cell_width
+            length = min(length, self.maze_width)
+
+            brightness = max(
+                0, min(255, int(255 / (1 + ray[3] * 0.01)))
+            )  # Calculate brightness (closer = brighter, farther = darker)
+
+            color = (0, brightness, 0)  # Green with darkness effect
+            if ray[4]:  # If hit a wall
+                color = (0, 0, brightness)  # Blue with darkness effect
+
+            pygame.draw.line(
+                screen,
+                color,
+                (current_x, self.maze_width / 2 - length / 2),
+                (current_x, self.maze_width / 2 + length / 2),
+                math.ceil(line_width),
+            )
+
             current_x += line_width

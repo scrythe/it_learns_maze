@@ -3,3 +3,5 @@
 __pycache__
 neat-checkpoint-*
 !neat-checkpoint-1499
+build
+neat

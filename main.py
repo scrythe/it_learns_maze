@@ -1,8 +1,25 @@
+# /// script
+# dependencies = [
+#  "pygame-ce",
+# ]
+# ///
+
 from typing import Any
 import pygame
-import neat
+from neat import (
+    DefaultGenome,
+    DefaultReproduction,
+    DefaultSpeciesSet,
+    DefaultStagnation,
+    Population,
+    Config,
+    Checkpointer,
+    StdOutReporter,
+    StatisticsReporter,
+)
 import pickle
 import argparse
+import asyncio
 
 from game.game import Game
 
@@ -36,23 +53,23 @@ def eval_genomes(genomes: list[Any], config, game: Game, render: bool):
 def train_ai(
     config_file: str, game: Game, n_gen: int, render: bool, checkpoint: str | None
 ):
-    config = neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
+    config = Config(
+        DefaultGenome,
+        DefaultReproduction,
+        DefaultSpeciesSet,
+        DefaultStagnation,
         config_file,
     )
     # Create the population, which is the top-level object for a NEAT run.
-    p = neat.Population(config)
+    p = Population(config)
     if checkpoint:
-        p = neat.Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
+        p = Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
 
     # Add a stdout reporter to show progress in the terminal.
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
+    p.add_reporter(StdOutReporter(True))
+    stats = StatisticsReporter()
     p.add_reporter(stats)
-    checkpointer = neat.Checkpointer(
+    checkpointer = Checkpointer(
         generation_interval=5, filename_prefix="checkpoints/neat-checkpoint-"
     )
     p.add_reporter(checkpointer)
@@ -67,12 +84,12 @@ def train_ai(
         pickle.dump(winner, f)
 
 
-def test_ai(config_file: str, game: Game):
-    config = neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
+async def test_ai(config_file: str, game: Game):
+    config = Config(
+        DefaultGenome,
+        DefaultReproduction,
+        DefaultSpeciesSet,
+        DefaultStagnation,
         config_file,
     )
     with open("best.pickle", "rb") as f:
@@ -80,75 +97,65 @@ def test_ai(config_file: str, game: Game):
     resizing = False
     RESIZE_DELAY = 200
     resize_timer = None
-    gen=0
-    while game.running or gen > 50:
+    while game.running:
         game.setup([[0, winner]], config, [0])
-        gen+=1
-        while len(game.players):
+        while game.running and len(game.players):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game.running = False
-                if event.type == pygame.VIDEORESIZE:
-                    resizing = True
-                    game.current_size = event.w
-                    game.maze.rescale_image(game.current_size)
-                # if resizing and event.type != pygame.VIDEORESIZE:
-                #     resizing = False
-                #     resize_timer = pygame.time.get_ticks()
-                # if (
-                #     resize_timer != None
-                #     and resize_timer + RESIZE_DELAY < pygame.time.get_ticks()
-                # ):
-                #     resize_timer = None
-                #     print(number)
-                #     number+=1
-                #     pygame.display.set_mode(
-                #         (game.current_size, game.current_size), pygame.RESIZABLE
-                #     )
 
             game.update()
             game.draw()
             game.clock.tick(game.FPS)
+            await asyncio.sleep(0)
         game.round += 26
 
 
-def execute_train_test(
+async def execute_train_test(
     mode, n_gen=0, render=False, checkpoint: str | None = None, max_rounds=2
 ):
     if mode == "test":
         game = Game(max_rounds=2)
-        test_ai("config.txt", game)
+        await test_ai("config.txt", game)
     else:
         game = Game(max_rounds)
         train_ai("config.txt", game, n_gen, render, checkpoint)
     pygame.quit()
 
-def main():
+
+async def main():
     parser = argparse.ArgumentParser(description="Train or Test a model.")
-    parser.add_argument(
-        "--mode",
-        type=str,
-        required=True,
-        choices=["train", "test"],
-        help="Mode to run the script in: 'train' or 'test'",
-    )
-    parser.add_argument("--n_gen", type=int, help="Number of generations")
-    parser.add_argument(
-        "--render",
-        type=lambda x: (str(x).lower() == "true"),
-        default=False,
-        help="Render the game (True/False)",
-    )
-    parser.add_argument(
-        "--checkpoint", type=str, default="", help="Path to checkpoint file (optional)"
-    )
-    parser.add_argument("--max_rounds", type=int, help="Max rounds per generation")
+    # parser.add_argument(
+    #     "--mode",
+    #     type=str,
+    #     required=True,
+    #     choices=["train", "test"],
+    #     help="Mode to run the script in: 'train' or 'test'",
+    # )
+    # parser.add_argument("--n_gen", type=int, help="Number of generations")
+    # parser.add_argument(
+    #     "--render",
+    #     type=lambda x: (str(x).lower() == "true"),
+    #     default=False,
+    #     help="Render the game (True/False)",
+    # )
+    # parser.add_argument(
+    #     "--checkpoint", type=str, default="", help="Path to checkpoint file (optional)"
+    # )
+    # parser.add_argument("--max_rounds", type=int, help="Max rounds per generation")
 
-    args = parser.parse_args()
+    # args = parser.parse_args()
+    # print("args:" + args)
 
-    execute_train_test(
-        args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds
+    # execute_train_test(
+    #     args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds
+    # )
+
+    await execute_train_test(
+        "test",
     )
+    # print("hm")
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

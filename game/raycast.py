@@ -1,6 +1,7 @@
 import pygame
 import math
 
+
 class Raycaster:
     @staticmethod
     def raycast_horizontal(
@@ -149,7 +150,7 @@ class Raycaster:
             ray = Raycaster.raycast(maze, rect, angle)
             ray_length = ray[2]
             if ray[3] == True:
-                ray_length = maze.image.width
+                ray_length = maze.image.get_width()
             no_fish_angle = player_angle - angle
             if no_fish_angle < 0:
                 no_fish_angle += 2 * math.pi

@@ -6,19 +6,20 @@ from game.player import Player
 
 
 class Game:
-    FPS = 0
+    FPS = 60
     MAZE_SIZE = 5
 
     def __init__(self, max_rounds):
         pygame.init()
         info = pygame.display.Info()
-        self.current_size = info.current_h
-        self.maze = MazeRendererWithCollision(self.MAZE_SIZE, 40)
-        height = info.current_h * 0.8
+        self.current_size = info.current_h * 0.6
+        self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
 
-        self.screen = pygame.display.set_mode((height * 2, height), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (self.current_size, self.current_size), pygame.RESIZABLE
+        )
         self.og_screen = pygame.Surface(
-            (self.maze.image.width * 2, self.maze.image.height)
+            (self.maze.image.get_width() * 2, self.maze.image.get_width() * 2)
         )
         self.clock = pygame.time.Clock()
         self.running = True
@@ -30,7 +31,7 @@ class Game:
 
     def setup(self, genomes, config, best_genome):
         if self.round > self.max_rounds:
-            self.maze = MazeRendererWithCollision(self.MAZE_SIZE, 40)
+            self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
             self.round = 0
             if self.max_rounds > 0:
                 self.max_rounds -= 0.5
@@ -49,7 +50,7 @@ class Game:
                 self.maze.path_cells,
                 genome,
                 net,
-                self.maze.image.width,
+                self.maze.image.get_width(),
                 self.maze.cell_width,
                 best_genome,
             )
@@ -68,9 +69,9 @@ class Game:
         self.maze.draw(self.og_screen)
         for player in self.players:
             player.draw(self.og_screen, self.maze)
-        self.screen.blit(
-            pygame.transform.scale(
-                self.og_screen, (self.screen.width, self.screen.height)
-            )
+        pygame.transform.scale(
+            self.og_screen,
+            (self.screen.get_width(), self.screen.get_height()),
+            self.screen,
         )
         pygame.display.update()

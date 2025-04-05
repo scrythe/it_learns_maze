@@ -3,19 +3,19 @@ import pygame
 
 
 class MazeRendererWithCollision:
-    def __init__(self, maze_size: int, cell_width: int):
+    cell_width = 40
+
+    def __init__(self, maze_size: int):
         """
         Initialisiert den Renderer und Kollisionslogik für das Labyrinth.
         """
         self.maze = MazeGenerator.generate_maze(maze_size)
-        self.cell_width = cell_width
         maze_surface_size = (
-            len(self.maze) * cell_width
+            len(self.maze) * self.cell_width
         )  # Gesamtgröße des Labyrinths in Pixeln
         self.image = pygame.Surface(
             (maze_surface_size, maze_surface_size)
         )  # Erstelle eine Oberfläche für das Labyrinth
-        self.scaled_image = self.image
         self.rect = self.image.get_rect()  # Rechteck für das Labyrinth
         self.boxes: list[pygame.Rect] = (
             []
@@ -70,14 +70,14 @@ class MazeRendererWithCollision:
                 self.image,
                 "Gray",
                 (0, self.cell_width * i),
-                (self.image.width, self.cell_width * i),
+                (self.image.get_width(), self.cell_width * i),
                 2,
             )  # Vertikale Linie
             pygame.draw.line(
                 self.image,
                 "Gray",
                 (self.cell_width * i, 0),
-                (self.cell_width * i, self.image.width),
+                (self.cell_width * i, self.image.get_width()),
                 2,
             )  # Horizontale Linie
 
