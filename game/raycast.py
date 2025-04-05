@@ -124,7 +124,8 @@ class Raycaster:
         ray_h = Raycaster.raycast_horizontal(maze.maze, maze.cell_width, rect, angle)
         ray_v = Raycaster.raycast_vertical(maze.maze, maze.cell_width, rect, angle)
         ray = min(ray_h, ray_v, key=lambda ray: ray[2])
-        return ray
+        ray_is_horizontal = [ray_h, ray_v].index(ray)
+        return ray, ray_is_horizontal
 
     @staticmethod
     def raycasting(
@@ -140,14 +141,14 @@ class Raycaster:
         """
         fov_rad = math.radians(fov)
         fov_step = fov_rad / amount
-        rays: list[tuple[float, float, float, float, bool]] = []
+        rays: list[tuple[float, float, float, float, bool, bool]] = []
         for current_step in range(amount):
             angle = player_angle - fov_rad / 2 + fov_step * current_step
             if angle < 0:
                 angle += 2 * math.pi
             if angle > 2 * math.pi:
                 angle -= 2 * math.pi
-            ray = Raycaster.raycast(maze, rect, angle)
+            ray, ray_is_horizontal = Raycaster.raycast(maze, rect, angle)
             ray_length = ray[2]
             if ray[3] == True:
                 ray_length = maze.image.get_width()
@@ -157,5 +158,7 @@ class Raycaster:
             if no_fish_angle > 2 * math.pi:
                 no_fish_angle -= 2 * math.pi
             no_fish_length = math.cos(no_fish_angle) * ray[2]
-            rays.append((ray[0], ray[1], ray_length, no_fish_length, ray[3]))
+            rays.append(
+                (ray[0], ray[1], ray_length, no_fish_length, ray[3], ray_is_horizontal)
+            )
         return rays

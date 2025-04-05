@@ -186,9 +186,14 @@ class Player:
             length = self.maze_width / ray[3] * self.cell_width
             length = min(length, self.maze_width)
 
-            color = "Green"
             if ray[4]:  # If hit a wall
-                color = "Blue"
+                color = "Blue"  # verticall Wall
+                if ray[5]:  # If horizontal Wall
+                    color = "Darkblue"
+            else:
+                color = "Green"
+                if ray[5]:
+                    color = "Darkgreen"
 
             pygame.draw.line(
                 screen,
