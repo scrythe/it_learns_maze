@@ -3,6 +3,7 @@ import pygame
 
 from game.maze_renderer_with_collision import MazeRendererWithCollision
 from game.player import Player
+import sys
 
 
 class Game:
@@ -12,15 +13,21 @@ class Game:
     def __init__(self, max_rounds):
         pygame.init()
         info = pygame.display.Info()
-        self.current_size = info.current_h * 0.6
+        current_size = info.current_h * 0.9
         self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
+        self.browser = True if sys.platform == "emscripten" else False
 
-        self.screen = pygame.display.set_mode(
-            (self.current_size, self.current_size), pygame.RESIZABLE
-        )
-        self.og_screen = pygame.Surface(
-            (self.maze.image.get_width() * 2, self.maze.image.get_width() * 2)
-        )
+        if self.browser:
+            self.screen = pygame.display.set_mode(
+                (self.maze.image.get_width() * 2, self.maze.image.get_width() * 2)
+            )
+        else:
+            self.screen = pygame.display.set_mode(
+                (current_size, current_size), pygame.RESIZABLE
+            )
+            self.og_screen = pygame.Surface(
+                (self.maze.image.get_width() * 2, self.maze.image.get_width() * 2)
+            )
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -65,13 +72,19 @@ class Game:
         self.ticks += 1
 
     def draw(self):
-        self.og_screen.fill("Black")
-        self.maze.draw(self.og_screen)
-        for player in self.players:
-            player.draw(self.og_screen, self.maze)
-        pygame.transform.scale(
-            self.og_screen,
-            (self.screen.get_width(), self.screen.get_height()),
-            self.screen,
-        )
+        if self.browser:
+            self.screen.fill("Black")
+            self.maze.draw(self.screen)
+            for player in self.players:
+                player.draw(self.screen, self.maze)
+        else:
+            self.og_screen.fill("Black")
+            self.maze.draw(self.og_screen)
+            for player in self.players:
+                player.draw(self.og_screen, self.maze)
+            pygame.transform.scale(
+                self.og_screen,
+                (self.screen.get_width(), self.screen.get_height()),
+                self.screen,
+            )
         pygame.display.update()
