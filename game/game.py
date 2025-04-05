@@ -32,11 +32,13 @@ class Game:
         self.running = True
 
         self.players: list[Player] = []
+        self.dead_players: list[Player] = []
         self.ticks = 0
         self.round = 0
         self.max_rounds = max_rounds
 
     def setup(self, genomes, config, best_genome):
+        self.dead_players = []
         if self.round > self.max_rounds:
             self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
             self.round = 0
@@ -61,27 +63,33 @@ class Game:
                 self.maze.cell_width,
                 best_genome,
             )
+            if best_genome:
+                self.best_player = player
             self.players.append(player)
 
     def update(self):
         for i, player in enumerate(self.players):
             player.update(self.maze)
             if player.life_time <= 0:
-                # print("fitness:", player.genome.fitness)
+                self.dead_players.append(self.players[i])
                 del self.players[i]
         self.ticks += 1
 
+    def normal_draw(self, screen: pygame.Surface):
+        screen.fill("Black")
+        self.maze.draw(screen)
+        for player in self.dead_players:
+            player.normal_draw(screen)
+        for player in self.players:
+            player.normal_draw(screen)
+        # Seperate to draw on top of other players
+        self.best_player.best_player_draw(screen, self.maze)
+
     def draw(self):
         if self.browser:
-            self.screen.fill("Black")
-            self.maze.draw(self.screen)
-            for player in self.players:
-                player.draw(self.screen, self.maze)
+            self.normal_draw(self.screen)
         else:
-            self.og_screen.fill("Black")
-            self.maze.draw(self.og_screen)
-            for player in self.players:
-                player.draw(self.og_screen, self.maze)
+            self.normal_draw(self.og_screen)
             pygame.transform.scale(
                 self.og_screen,
                 (self.screen.get_width(), self.screen.get_height()),

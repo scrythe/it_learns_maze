@@ -26,8 +26,10 @@ class Player:
         cell_width: int,
         best_genome: bool,
     ) -> None:
-        self.image = pygame.Surface((radius * 2, radius * 2))
-        self.rect: rect.FRect = self.image.get_frect(center=pos)
+        self.alive_image = pygame.Surface((radius * 2, radius * 2))
+        self.alive_image.fill("White")
+        self.rect: rect.FRect = self.alive_image.get_frect(center=pos)
+
         self.boxes = boxes
         self.boxes_type = boxes_type
         self.path_cells = path_cells
@@ -42,8 +44,13 @@ class Player:
         self.cell_width = cell_width
         self.maze_inside_width = 840 - cell_width * 2
 
-        self.image.set_colorkey((0, 0, 0))
-        pygame.draw.circle(self.image, "Red", (radius, radius), radius)
+        self.alive_image.set_colorkey((255, 255, 255))
+        self.dead_image = self.alive_image.copy()
+        self.best_image = self.alive_image.copy()
+
+        pygame.draw.circle(self.alive_image, "Red", (radius, radius), radius)
+        pygame.draw.circle(self.dead_image, "Black", (radius, radius), radius)
+        pygame.draw.circle(self.best_image, "#3eb9c1", (radius, radius), radius)
 
         self.direction = pygame.Vector2()
         self.angle = 0
@@ -153,13 +160,21 @@ class Player:
         end_line_y = self.rect.centery + self.angle_direction.y * 20
         pygame.draw.line(screen, "Blue", self.rect.center, (end_line_x, end_line_y), 2)
 
-    def draw(self, screen: pygame.Surface, maze):
+    def normal_draw(self, screen: pygame.Surface):
+        if not self.best_genome:
+            self.draw_look_direction(screen)
+            if self.life_time <= 0:
+                screen.blit(self.dead_image, self.rect)
+            else:
+                screen.blit(self.alive_image, self.rect)
+
+    # seperate to draw on top of other players
+    def best_player_draw(self, screen: pygame.Surface, maze):
         self.draw_look_direction(screen)
-        if self.best_genome:
-            self.draw_rays(screen)
-            self.draw_3D(screen, maze)
-            self.ai_view(screen, maze)
-        screen.blit(self.image, self.rect)
+        self.draw_rays(screen)
+        self.draw_3D(screen, maze)
+        self.ai_view(screen, maze)
+        screen.blit(self.best_image, self.rect)
 
     def draw_3D(self, screen: pygame.Surface, maze):
         line_width = self.maze_width * 2 / self.three_d_rays_amount

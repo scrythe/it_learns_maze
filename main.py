@@ -114,6 +114,7 @@ async def test_ai(config_file: str, game: Game):
     )
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
+
     while game.running:
         game.setup([[0, winner]], config, [0])
         while game.running and len(game.players):
@@ -142,6 +143,7 @@ async def test_ai(config_file: str, game: Game):
             game.draw()
             game.clock.tick(game.FPS)
             await asyncio.sleep(0)
+
         game.round += 1
 
 
@@ -149,7 +151,7 @@ async def execute_train_test(
     mode, n_gen=0, render=False, checkpoint: str | None = None, max_rounds=2
 ):
     if mode == "test":
-        game = Game(max_rounds=2)
+        game = Game(max_rounds=0.5)
         await test_ai("config.txt", game)
     else:
         game = Game(max_rounds)
@@ -185,8 +187,9 @@ async def main():
     #     args.mode, args.n_gen, args.render, args.checkpoint, args.max_rounds
     # )
 
-    await execute_train_test("train", 500, True, "neat-checkpoint-1499", 2)
-    # await execute_train_test("test")
+    # await execute_train_test("train", 500, True, "neat-checkpoint-1499", 2)
+    # await execute_train_test("train", 500, True, None, 20)
+    await execute_train_test("test")
 
 
 if __name__ == "__main__":

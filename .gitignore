@@ -5,3 +5,5 @@ neat-checkpoint-*
 !neat-checkpoint-1499
 build
 neat
+pygame_screen_record
+game_recordings.mp4
