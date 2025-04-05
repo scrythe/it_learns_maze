@@ -203,6 +203,14 @@ class Player:
                 math.ceil(line_width),
             )
 
+            pygame.draw.line(
+                screen,
+                "#4f772d",
+                (current_x, self.maze_width / 2 * 3 + length / 2),
+                (current_x, self.maze_width * 2),
+                math.ceil(line_width),
+            )
+
             current_x += line_width
 
     def ai_view(self, screen: pygame.Surface, maze):
@@ -226,6 +234,14 @@ class Player:
                 color,
                 (current_x, self.maze_width / 2 - length / 2),
                 (current_x, self.maze_width / 2 + length / 2),
+                math.ceil(line_width),
+            )
+
+            pygame.draw.line(
+                screen,
+                "#4f772d",
+                (current_x, self.maze_width / 2 + length / 2),
+                (current_x, self.maze_width),
                 math.ceil(line_width),
             )
 

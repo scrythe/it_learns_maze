@@ -76,7 +76,7 @@ class Game:
         self.ticks += 1
 
     def normal_draw(self, screen: pygame.Surface):
-        screen.fill("Black")
+        screen.fill("#132a13")
         self.maze.draw(screen)
         for player in self.dead_players:
             player.normal_draw(screen)
