@@ -4,13 +4,14 @@ import pygame
 from game.maze_renderer_with_collision import MazeRendererWithCollision
 from game.player import Player
 import sys
+import asyncio
 
 
 class Game:
     FPS = 60
     MAZE_SIZE = 5
 
-    def __init__(self, max_rounds):
+    def __init__(self, max_rounds) -> None:
         pygame.init()
         info = pygame.display.Info()
         current_size = info.current_h * 0.9
@@ -28,8 +29,10 @@ class Game:
             self.og_screen = pygame.Surface(
                 (self.maze.image.get_width() * 2, self.maze.image.get_width() * 2)
             )
+        self.screen_rect = self.screen.get_rect()
+
         self.clock = pygame.time.Clock()
-        self.running = True
+        self.running = False
 
         self.players: list[Player] = []
         self.dead_players: list[Player] = []
@@ -75,7 +78,7 @@ class Game:
                 del self.players[i]
         self.ticks += 1
 
-    def normal_draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface):
         screen.fill("#132a13")
         self.maze.draw(screen)
         for player in self.dead_players:
@@ -85,14 +88,46 @@ class Game:
         # Seperate to draw on top of other players
         self.best_player.best_player_draw(screen, self.maze)
 
-    def draw(self):
-        if self.browser:
-            self.normal_draw(self.screen)
-        else:
-            self.normal_draw(self.og_screen)
-            pygame.transform.scale(
-                self.og_screen,
-                (self.screen.get_width(), self.screen.get_height()),
-                self.screen,
-            )
-        pygame.display.update()
+    async def game_loop(self):
+        self.running = True
+        print(self.running)
+        while self.running and len(self.players):
+            prev_width = self.screen.get_width()
+            prev_height = self.screen.get_height()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+
+                if event.type == pygame.VIDEORESIZE:
+                    if abs(prev_width - event.w) > abs(prev_height - event.h):
+                        prev_width = event.w
+                        prev_height = event.h
+                        self.screen = pygame.display.set_mode(
+                            (event.w, event.w), pygame.RESIZABLE
+                        )
+                        self.screen_rect = self.screen.get_rect()
+                    else:
+                        prev_width = event.w
+                        prev_height = event.h
+                        self.screen = pygame.display.set_mode(
+                            (event.h, event.h), pygame.RESIZABLE
+                        )
+                        self.screen_rect = self.screen.get_rect()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+
+            self.update()
+            if self.browser:
+                self.draw(self.screen)
+            else:
+                self.draw(self.og_screen)
+                pygame.transform.scale(
+                    self.og_screen,
+                    (self.screen.get_width(), self.screen.get_height()),
+                    self.screen,
+                )
+
+            self.clock.tick(self.FPS)
+            pygame.display.update()
+            await asyncio.sleep(0)
