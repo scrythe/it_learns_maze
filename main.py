@@ -16,12 +16,9 @@ import pickle
 from game.game import Game
 from button import TextButton
 from game.empty_genome import EmptyGenome
+from game.terminate_session import TerminateSession
 
 browser = True if sys.platform == "emscripten" else False
-
-
-def get_font(size):  # Returns Press-Start-2P in the desired size
-    return pygame.font.Font("assets/font.ttf", size)
 
 
 async def main():
@@ -115,7 +112,7 @@ async def main():
                 if test_button.check_click(mouse_pos):
                     await test_ai(game)
                 if train_button.check_click(mouse_pos):
-                    pass
+                    await train_ai(game)
                 if not browser:
                     if exit_button.check_click(mouse_pos):
                         running = False
@@ -135,6 +132,17 @@ async def main():
         await asyncio.sleep(0)
 
 
+async def play(game: Game):
+    while True:
+        empty_genome = EmptyGenome()
+        game.setup(genomes=[[0, empty_genome]], config=None, best_genome=[0], ai=False)
+        try:
+            await game.game_loop()
+        except TerminateSession:
+            return
+        game.round += 1
+
+
 async def test_ai(game: Game):
     config = neat.Config(
         neat.DefaultGenome,
@@ -147,20 +155,59 @@ async def test_ai(game: Game):
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
 
-    game.running = True
-    while game.running:
+    while True:
         game.setup(genomes=[[0, winner]], config=config, best_genome=[0], ai=True)
-        await game.game_loop()
+        try:
+            await game.game_loop()
+        except TerminateSession:
+            return
         game.round += 1
 
 
-async def play(game: Game):
-    game.running = True
-    while game.running:
-        empty_genome = EmptyGenome()
-        game.setup(genomes=[[0, empty_genome]], config=None, best_genome=[0], ai=False)
-        await game.game_loop()
-        game.round += 1
+async def train_ai(game: Game):
+    config = neat.Config(
+        neat.DefaultGenome,
+        neat.DefaultReproduction,
+        neat.DefaultSpeciesSet,
+        neat.DefaultStagnation,
+        "config.txt",
+    )
+    # Create the population, which is the top-level object for a NEAT run.
+    p = neat.Population(config)
+    # if checkpoint:
+    #     p = neat.Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
+
+    checkpointer = neat.Checkpointer(
+        generation_interval=5, filename_prefix="checkpoints/neat-checkpoint-"
+    )
+    p.add_reporter(checkpointer)
+
+    # Damit zusätzliche Parameter mitgegeben werden können
+    async def execute_eval_genomes_func(genomes, config):
+        await eval_genomes(genomes, config, game)
+
+    # Run for up to "n_gen" amount of generations.
+    try:
+        winner = await p.run(execute_eval_genomes_func, 50)
+    except TerminateSession:
+        winner = p.best_genome
+        print(winner)
+    with open("best.pickle", "wb") as f:
+        pickle.dump(winner, f)
+
+
+async def eval_genomes(genomes: list[Any], config, game: Game):
+    def best_genome_max(genome):
+        if genome[1].fitness == None:
+            return -100
+        return genome[1].fitness
+
+    best_genome = max(genomes, key=best_genome_max)
+    for _, genome in genomes:
+        genome.fitness = 0
+    game.setup(genomes, config, best_genome, ai=True)
+    await game.game_loop()
+    game.round += 1
 
 
 if __name__ == "__main__":

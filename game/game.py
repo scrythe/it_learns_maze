@@ -5,6 +5,7 @@ from game.maze_renderer_with_collision import MazeRendererWithCollision
 from game.player import Player
 import sys
 import asyncio
+from game.terminate_session import TerminateSession
 
 
 class Game:
@@ -101,6 +102,7 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    raise TerminateSession
 
                 if event.type == pygame.VIDEORESIZE:
                     if abs(prev_width - event.w) > abs(prev_height - event.h):
@@ -120,6 +122,7 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+                        raise TerminateSession
 
             self.update()
             if self.browser:
