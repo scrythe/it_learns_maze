@@ -15,6 +15,7 @@ import pickle
 
 from game.game import Game
 from button import TextButton
+from game.empty_genome import EmptyGenome
 
 browser = True if sys.platform == "emscripten" else False
 
@@ -24,7 +25,7 @@ def get_font(size):  # Returns Press-Start-2P in the desired size
 
 
 async def main():
-    game = Game(max_rounds=0.5)
+    game = Game(browser)
 
     running = True
     while running:
@@ -110,13 +111,14 @@ async def main():
                     game.screen_rect = game.screen.get_rect()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.check_click(mouse_pos):
-                    print("hm")
+                    await play(game)
                 if test_button.check_click(mouse_pos):
                     await test_ai(game)
                 if train_button.check_click(mouse_pos):
                     pass
-                if exit_button.check_click(mouse_pos):
-                    running = False
+                if not browser:
+                    if exit_button.check_click(mouse_pos):
+                        running = False
 
         # await test_ai(game)
 
@@ -125,7 +127,8 @@ async def main():
         play_button.draw(game.screen)
         test_button.draw(game.screen)
         train_button.draw(game.screen)
-        exit_button.draw(game.screen)
+        if not browser:
+            exit_button.draw(game.screen)
 
         game.clock.tick(game.FPS)
         pygame.display.update()
@@ -140,13 +143,24 @@ async def test_ai(game: Game):
         neat.DefaultStagnation,
         "config.txt",
     )
+
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
 
     game.running = True
     while game.running:
-        game.setup([[0, winner]], config, [0])
+        game.setup(genomes=[[0, winner]], config=config, best_genome=[0], ai=True)
         await game.game_loop()
+        game.round += 1
+
+
+async def play(game: Game):
+    game.running = True
+    while game.running:
+        empty_genome = EmptyGenome()
+        game.setup(genomes=[[0, empty_genome]], config=None, best_genome=[0], ai=False)
+        await game.game_loop()
+        game.round += 1
 
 
 if __name__ == "__main__":

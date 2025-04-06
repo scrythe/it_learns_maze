@@ -25,6 +25,7 @@ class Player:
         maze_width: int,
         cell_width: int,
         best_genome: bool,
+        ai: int,
     ) -> None:
         self.alive_image = pygame.Surface((radius * 2, radius * 2))
         self.alive_image.fill("White")
@@ -39,6 +40,7 @@ class Player:
         self.best_genome = best_genome
         self.life_time = self.LIFE_TIME
         self.total_time = 0
+        self.ai = ai
 
         self.maze_width = maze_width
         self.cell_width = cell_width
@@ -135,17 +137,21 @@ class Player:
                 self.life_time += 20
                 self.genome.fitness += 8
             self.path_cells_score[collision_index] += 1
-            if self.path_cells_score[collision_index] > 50:
-                self.life_time = 0
-                self.genome.fitness -= 80
+            if self.ai:
+                if self.path_cells_score[collision_index] > 50:
+                    self.life_time = 0
+                    self.genome.fitness -= 80
 
     def update(self, maze):
         self.raycasting(maze)
-        self.ai_input()
-        # self.angle_input()
+        if self.ai:
+            self.ai_input()
+        else:
+            self.angle_input()
         self.move()
         self.path_collision()
-        self.life_time -= 1
+        if self.ai:
+            self.life_time -= 1
         self.total_time += 1
 
     def draw_rays(self, screen: pygame.Surface):

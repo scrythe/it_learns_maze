@@ -11,12 +11,12 @@ class Game:
     FPS = 60
     MAZE_SIZE = 5
 
-    def __init__(self, max_rounds) -> None:
+    def __init__(self, browser: int) -> None:
         pygame.init()
         info = pygame.display.Info()
         current_size = info.current_h * 0.9
         self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
-        self.browser = True if sys.platform == "emscripten" else False
+        self.browser = browser
 
         if self.browser:
             self.screen = pygame.display.set_mode(
@@ -38,9 +38,10 @@ class Game:
         self.dead_players: list[Player] = []
         self.ticks = 0
         self.round = 0
-        self.max_rounds = max_rounds
+        self.max_rounds = 0.5
 
-    def setup(self, genomes, config, best_genome):
+    def setup(self, genomes, config, best_genome, ai):
+        self.players = []
         self.dead_players = []
         if self.round > self.max_rounds:
             self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
@@ -53,7 +54,10 @@ class Game:
             best_genome = False
             if i == best_genome_id:
                 best_genome = True
-            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            if ai:
+                net = neat.nn.FeedForwardNetwork.create(genome, config)
+            else:
+                net = None
             player = Player(
                 (posx, posx),
                 5,
@@ -65,6 +69,7 @@ class Game:
                 self.maze.image.get_width(),
                 self.maze.cell_width,
                 best_genome,
+                ai,
             )
             if best_genome:
                 self.best_player = player
@@ -90,7 +95,6 @@ class Game:
 
     async def game_loop(self):
         self.running = True
-        print(self.running)
         while self.running and len(self.players):
             prev_width = self.screen.get_width()
             prev_height = self.screen.get_height()
