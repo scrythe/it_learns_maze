@@ -41,7 +41,11 @@ class Game:
         self.round = 0
         self.max_rounds = 0.5
 
-    def setup(self, genomes, config, best_genome, ai):
+    def setup_game(self, max_rounds):
+        self.max_rounds = max_rounds
+        self.maze = MazeRendererWithCollision(self.MAZE_SIZE)
+
+    def setup_ai_env(self, genomes, config, best_genome, ai):
         self.players = []
         self.dead_players = []
         if self.round > self.max_rounds:

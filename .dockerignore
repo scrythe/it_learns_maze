@@ -1,0 +1,9 @@
+*
+!assets
+!game
+!checkpoints
+!main.py
+!button.py
+!config.txt
+!best.pickle
+!neat

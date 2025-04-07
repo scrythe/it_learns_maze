@@ -133,9 +133,12 @@ async def main():
 
 
 async def play(game: Game):
+    game.setup_game(0.5)
     while True:
         empty_genome = EmptyGenome()
-        game.setup(genomes=[[0, empty_genome]], config=None, best_genome=[0], ai=False)
+        game.setup_ai_env(
+            genomes=[[0, empty_genome]], config=None, best_genome=[0], ai=False
+        )
         try:
             await game.game_loop()
         except TerminateSession:
@@ -155,8 +158,11 @@ async def test_ai(game: Game):
     with open("best.pickle", "rb") as f:
         winner = pickle.load(f)
 
+    game.setup_game(0.5)
     while True:
-        game.setup(genomes=[[0, winner]], config=config, best_genome=[0], ai=True)
+        game.setup_ai_env(
+            genomes=[[0, winner]], config=config, best_genome=[0], ai=True
+        )
         try:
             await game.game_loop()
         except TerminateSession:
@@ -187,11 +193,11 @@ async def train_ai(game: Game):
         await eval_genomes(genomes, config, game)
 
     # Run for up to "n_gen" amount of generations.
+    game.setup_game(20)
     try:
         winner = await p.run(execute_eval_genomes_func, 50)
     except TerminateSession:
         winner = p.best_genome
-        print(winner)
     with open("best.pickle", "wb") as f:
         pickle.dump(winner, f)
 
@@ -205,7 +211,7 @@ async def eval_genomes(genomes: list[Any], config, game: Game):
     best_genome = max(genomes, key=best_genome_max)
     for _, genome in genomes:
         genome.fitness = 0
-    game.setup(genomes, config, best_genome, ai=True)
+    game.setup_ai_env(genomes, config, best_genome, ai=True)
     await game.game_loop()
     game.round += 1
 

@@ -5,3 +5,7 @@ python main.py --mode train --checkpoint neat-checkpoint-1499 --n_gen 200 --rend
 python main.py --mode test
 
 pygbag --archive --ume_block=0 .
+
+docker build -t it-learns-maze .
+
+docker run -p 80:80 it-learns-maze

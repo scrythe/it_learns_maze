@@ -126,7 +126,7 @@ class Player:
                 self.genome.fitness += 10000
                 self.genome.fitness -= self.total_time
             else:
-                self.genome.fitness -= 65
+                self.genome.fitness -= 40
             self.life_time = 0
             return
 
