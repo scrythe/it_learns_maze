@@ -4,6 +4,7 @@ import gzip
 import pickle
 import random
 import time
+import base64
 
 from neat.population import Population
 from neat.reporting import BaseReporter
@@ -15,8 +16,12 @@ class Checkpointer(BaseReporter):
     to save and restore populations (and other aspects of the simulation state).
     """
 
-    def __init__(self, generation_interval=100, time_interval_seconds=300,
-                 filename_prefix='neat-checkpoint-'):
+    def __init__(
+        self,
+        generation_interval=100,
+        time_interval_seconds=300,
+        filename_prefix="neat-checkpoint-",
+    ):
         """
         Saves the current state (at the end of a generation) every ``generation_interval`` generations or
         ``time_interval_seconds``, whichever happens first.
@@ -52,18 +57,26 @@ class Checkpointer(BaseReporter):
                 checkpoint_due = True
 
         if checkpoint_due:
-            self.save_checkpoint(config, population, species_set, self.current_generation)
+            self.save_checkpoint(
+                config, population, species_set, self.current_generation
+            )
             self.last_generation_checkpoint = self.current_generation
             self.last_time_checkpoint = time.time()
 
     def save_checkpoint(self, config, population, species_set, generation):
-        """ Save the current simulation state. """
-        filename = '{0}{1}'.format(self.filename_prefix, generation)
-        print("Saving checkpoint to {0}".format(filename))
+        """Save the current simulation state."""
+        filename = "{0}{1}".format(self.filename_prefix, generation)
 
-        with gzip.open(filename, 'w', compresslevel=5) as f:
-            data = (generation, config, population, species_set, random.getstate())
-            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        data = (generation, config, population, species_set, random.getstate())
+        if __import__("sys").platform == "emscripten":
+            from platform import window
+
+            pickled_data = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
+            pickled_data_b64 = base64.b64encode(pickled_data).decode("utf-8")
+            window.localStorage.setItem(filename, pickled_data_b64)
+        else:
+            with gzip.open(filename, "w", compresslevel=5) as f:
+                pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
     def restore_checkpoint(filename):

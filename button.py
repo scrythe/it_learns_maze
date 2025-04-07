@@ -8,7 +8,7 @@ class TextButton:
         size: float,
         text_input: str,
         text_color: pygame.color.Color,
-        background_color: pygame.color.Color,
+        background_color: pygame.color.Color | None,
         **position: Any,
     ):
         self.text_input = text_input

@@ -1,2 +1,0 @@
-class TerminateSession(Exception):
-    pass

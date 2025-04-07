@@ -16,7 +16,7 @@ import pickle
 from game.game import Game
 from button import TextButton
 from game.empty_genome import EmptyGenome
-from game.terminate_session import TerminateSession
+from game.errors import TerminateSession, TerminateWindow
 import base64
 
 
@@ -34,7 +34,7 @@ async def main():
         main_menu_title = TextButton(
             game.screen.get_width() / 12,
             "Main Menu",
-            "White",
+            pygame.Color("White"),
             None,
             midtop=(game.screen_rect.centerx, game.screen_rect.centery / 4),
         )
@@ -42,7 +42,7 @@ async def main():
         play_button = TextButton(
             game.screen.get_width() / 15,
             "Play",
-            "#dad7cd",
+            pygame.Color("#dad7cd"),
             pygame.Color(58, 90, 64, 120),
             midtop=(
                 game.screen_rect.centerx,
@@ -53,7 +53,7 @@ async def main():
         test_button = TextButton(
             game.screen.get_width() / 15,
             "Test",
-            "#dad7cd",
+            pygame.Color("#dad7cd"),
             pygame.Color(58, 90, 64, 120),
             midtop=(
                 game.screen_rect.centerx,
@@ -64,7 +64,7 @@ async def main():
         train_button = TextButton(
             game.screen.get_width() / 15,
             "Train",
-            "#dad7cd",
+            pygame.Color("#dad7cd"),
             pygame.Color(58, 90, 64, 120),
             midtop=(
                 game.screen_rect.centerx,
@@ -75,7 +75,7 @@ async def main():
         exit_button = TextButton(
             game.screen.get_width() / 15,
             "Exit",
-            "#dad7cd",
+            pygame.Color("#dad7cd"),
             pygame.Color(58, 90, 64, 120),
             midtop=(
                 game.screen_rect.centerx,
@@ -113,11 +113,20 @@ async def main():
                     game.screen_rect = game.screen.get_rect()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.check_click(mouse_pos):
-                    await play(game)
+                    try:
+                        await play(game)
+                    except TerminateWindow:
+                        return
                 if test_button.check_click(mouse_pos):
-                    await test_ai(game)
+                    try:
+                        await test_ai(game)
+                    except TerminateWindow:
+                        return
                 if train_button.check_click(mouse_pos):
-                    await train_ai(game)
+                    try:
+                        await train_menu(game)
+                    except TerminateWindow:
+                        return
                 if not browser:
                     if exit_button.check_click(mouse_pos):
                         running = False
@@ -182,7 +191,103 @@ async def test_ai(game: Game):
         game.round += 1
 
 
-async def train_ai(game: Game):
+async def train_menu(game: Game):
+    running = True
+    train_button_selected = False
+    train_menu_text = ""
+    while running:
+        current_train_menu_text = (
+            train_menu_text if train_menu_text else "Amount of\nGenerations"
+        )
+
+        train_menu_title = TextButton(
+            game.screen.get_width() / 12,
+            "Train Menu",
+            pygame.Color("White"),
+            None,
+            midtop=(game.screen_rect.centerx, game.screen_rect.centery / 4),
+        )
+
+        n_generations_box = TextButton(
+            game.screen.get_width() / 20,
+            current_train_menu_text,
+            pygame.Color("#dad7cd"),
+            pygame.Color(58, 90, 64, 120),
+            midtop=(
+                game.screen_rect.centerx,
+                train_menu_title.image_rect.bottom + game.screen.get_width() / 10,
+            ),
+        )
+
+        train_button = TextButton(
+            game.screen.get_width() / 15,
+            "Train",
+            pygame.Color("#dad7cd"),
+            pygame.Color(58, 90, 64, 120),
+            midtop=(
+                game.screen_rect.centerx,
+                n_generations_box.image_rect.bottom + game.screen.get_width() / 15,
+            ),
+        )
+
+        prev_width = game.screen.get_width()
+        prev_height = game.screen.get_height()
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        n_generations_box.on_hover(mouse_pos)
+        train_button.on_hover(mouse_pos)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise TerminateWindow
+            if event.type == pygame.VIDEORESIZE:
+                if abs(prev_width - event.w) > abs(prev_height - event.h):
+                    prev_width = event.w
+                    prev_height = event.h
+                    game.screen = pygame.display.set_mode(
+                        (event.w, event.w), pygame.RESIZABLE
+                    )
+                    game.screen_rect = game.screen.get_rect()
+                else:
+                    prev_width = event.w
+                    prev_height = event.h
+                    game.screen = pygame.display.set_mode(
+                        (event.h, event.h), pygame.RESIZABLE
+                    )
+                    game.screen_rect = game.screen.get_rect()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if n_generations_box.check_click(mouse_pos):
+                    train_button_selected = True
+                else:
+                    train_button_selected = False
+                if train_button.check_click(mouse_pos):
+                    if train_menu_text:
+                        n_gen = int(train_menu_text)
+                    else:
+                        n_gen = 500
+                    await train_ai(game, n_gen)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                if train_button_selected:
+                    if event.key == pygame.K_BACKSPACE:
+                        train_menu_text = train_menu_text[:-1]
+                    else:
+                        if event.unicode.isnumeric():
+                            train_menu_text += event.unicode
+
+        game.screen.fill("#588157")
+        train_menu_title.draw(game.screen)
+        n_generations_box.draw(game.screen)
+        train_button.draw(game.screen)
+
+        game.clock.tick(game.FPS)
+        pygame.display.update()
+        await asyncio.sleep(0)
+
+
+async def train_ai(game: Game, n_gen: int):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -204,10 +309,10 @@ async def train_ai(game: Game):
     async def execute_eval_genomes_func(genomes, config):
         await eval_genomes(genomes, config, game)
 
-    # Run for up to "n_gen" amount of generations.
     game.setup_game(20)
     try:
-        winner = await p.run(execute_eval_genomes_func, 50)
+        # Run for up to "n_gen" amount of generations.
+        winner = await p.run(execute_eval_genomes_func, n_gen)
     except TerminateSession:
         winner = p.best_genome
 
