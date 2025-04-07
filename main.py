@@ -17,8 +17,13 @@ from game.game import Game
 from button import TextButton
 from game.empty_genome import EmptyGenome
 from game.terminate_session import TerminateSession
+import base64
+
 
 browser = True if sys.platform == "emscripten" else False
+
+if browser:
+    from platform import window  # type: ignore[attr-defined]
 
 
 async def main():
@@ -155,8 +160,15 @@ async def test_ai(game: Game):
         "config.txt",
     )
 
-    with open("best.pickle", "rb") as f:
-        winner = pickle.load(f)
+    if browser:
+        pickled_data_b64 = window.localStorage.getItem("best.pickle")
+        if not pickled_data_b64:
+            return
+        pickle_data = base64.b64decode(pickled_data_b64)
+        winner = pickle.loads(pickle_data)
+    else:
+        with open("best.pickle", "rb") as f:
+            winner = pickle.load(f)
 
     game.setup_game(0.5)
     while True:
@@ -198,8 +210,15 @@ async def train_ai(game: Game):
         winner = await p.run(execute_eval_genomes_func, 50)
     except TerminateSession:
         winner = p.best_genome
-    with open("best.pickle", "wb") as f:
-        pickle.dump(winner, f)
+
+    if winner:
+        if browser:
+            pickled_data = pickle.dumps(winner)
+            pickled_data_b64 = base64.b64encode(pickled_data).decode("utf-8")
+            window.localStorage.setItem("best.pickle", pickled_data_b64)
+        else:
+            with open("best.pickle", "wb") as f:
+                pickle.dump(winner, f)
 
 
 async def eval_genomes(genomes: list[Any], config, game: Game):
