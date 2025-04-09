@@ -31,9 +31,13 @@ if browser:
 async def main():
     game = Game(browser)
     running = True
-    alreadyVisited = window.localStorage.getItem("visited")
-    if not alreadyVisited:
-        window.localStorage.setItem("visited", True)
+    version = window.localStorage.getItem("version")
+    if not version or not "1.0.0":
+        for i in range(window.localStorage.length):
+            key = window.localStorage.key(i)
+            window.localStorage.removeItem(key)
+
+        window.localStorage.setItem("version", "1.0.0")
         example_checkpoint = "checkpoints/1499"
         if os.path.isfile(example_checkpoint):
             with gzip.open(example_checkpoint) as f:

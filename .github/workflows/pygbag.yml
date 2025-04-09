@@ -22,6 +22,8 @@ jobs:
           cp button.py it-learns-maze
           cp config.txt it-learns-maze
           cp best.pickle it-learns-maze
+          cp -r menus it-learns-maze
+          cp get_checkpoints.py it-learns-maze
       - name: Install pygbag
         run: python -m pip install pygbag
       - name: Build Game
