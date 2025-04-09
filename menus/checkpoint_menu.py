@@ -79,6 +79,11 @@ async def checkpoint_menu(game: Game):
                     if mouse_checkpoint < 0:
                         mouse_checkpoint = len(checkpoint_id_list) - 1
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for checkpoint_button in checkpoint_selections:
+                    if checkpoint_button.check_click(mouse_pos):
+                        return (checkpoint_button.text_input)
+
         game.screen.fill("#588157")
         checkpoint_menu_title.draw(game.screen)
         for checkpoint_button in checkpoint_selections:

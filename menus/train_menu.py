@@ -106,13 +106,13 @@ async def train_menu(game: Game):
                 else:
                     train_button_selected = False
                 if checkpoint_select_button.check_click(mouse_pos):
-                    await checkpoint_menu(game)
+                    current_checkpoint = await checkpoint_menu(game)
                 if train_button.check_click(mouse_pos):
                     if train_menu_text:
                         n_gen = int(train_menu_text)
                     else:
                         n_gen = 500
-                    await train_ai(game, n_gen)
+                    await train_ai(game, n_gen, current_checkpoint)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
@@ -134,7 +134,7 @@ async def train_menu(game: Game):
         await asyncio.sleep(0)
 
 
-async def train_ai(game: Game, n_gen: int):
+async def train_ai(game: Game, n_gen: int, checkpoint: str | None):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -144,8 +144,8 @@ async def train_ai(game: Game, n_gen: int):
     )
     # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
-    # if checkpoint:
-    #     p = neat.Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
+    if checkpoint:
+        p = neat.Checkpointer.restore_checkpoint(f"checkpoints/{checkpoint}")
 
     checkpointer = neat.Checkpointer(
         generation_interval=5, filename_prefix="checkpoints/"
