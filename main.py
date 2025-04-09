@@ -27,7 +27,6 @@ if browser:
 
 async def main():
     game = Game(browser)
-
     running = True
     while running:
         main_menu_title = TextButton(
@@ -129,8 +128,6 @@ async def main():
                 if not browser:
                     if exit_button.check_click(mouse_pos):
                         running = False
-
-        # await test_ai(game)
 
         game.screen.fill("#588157")
         main_menu_title.draw(game.screen)

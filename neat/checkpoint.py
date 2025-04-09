@@ -81,7 +81,17 @@ class Checkpointer(BaseReporter):
     @staticmethod
     def restore_checkpoint(filename):
         """Resumes the simulation from a previous saved point."""
-        with gzip.open(filename) as f:
-            generation, config, population, species_set, rndstate = pickle.load(f)
-            random.setstate(rndstate)
-            return Population(config, (population, species_set, generation))
+
+        if __import__("sys").platform == "emscripten":
+            from platform import window
+
+            pickled_data_b64 = window.localStorage.getItem(filename)
+            pickled_data = base64.b64decode(pickled_data_b64)
+            generation, config, population, species_set, rndstate = pickle.loads(
+                pickled_data
+            )
+        else:
+            with gzip.open(filename) as f:
+                generation, config, population, species_set, rndstate = pickle.load(f)
+        random.setstate(rndstate)
+        return Population(config, (population, species_set, generation))
