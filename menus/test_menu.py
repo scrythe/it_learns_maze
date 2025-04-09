@@ -5,7 +5,7 @@ import base64
 import pickle
 from game.errors import TerminateSession
 
-browser = True if sys.platform == "emscripten" else False
+browser = sys.platform == "emscripten"
 if browser:
     from platform import window  # type: ignore[attr-defined]
 

@@ -1,7 +1,7 @@
 import os
 import sys
 
-browser = True if sys.platform == "emscripten" else False
+browser = sys.platform == "emscripten"
 if browser:
     from platform import window  # type: ignore[attr-defined]
 
@@ -24,6 +24,7 @@ def get_browser_checkpoints() -> list[int]:
         if key[0] == "checkpoints":
             checkpoint = int(key[1])
             checkpoints.append(checkpoint)
+    checkpoints.sort()
     return checkpoints
 
 

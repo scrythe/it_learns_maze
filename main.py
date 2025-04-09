@@ -17,7 +17,10 @@ from game.empty_genome import EmptyGenome
 from game.errors import TerminateSession, TerminateWindow
 from menus.train_menu import train_menu
 from menus.test_menu import test_ai
-
+import os
+import gzip
+import pickle
+import base64
 
 browser = True if sys.platform == "emscripten" else False
 
@@ -28,6 +31,17 @@ if browser:
 async def main():
     game = Game(browser)
     running = True
+    alreadyVisited = window.localStorage.getItem("visited")
+    if not alreadyVisited:
+        window.localStorage.setItem("visited", True)
+        example_checkpoint = "checkpoints/1499"
+        if os.path.isfile(example_checkpoint):
+            with gzip.open(example_checkpoint) as f:
+                data = pickle.load(f)
+                pickled_data = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
+                pickled_data_b64 = base64.b64encode(pickled_data).decode("utf-8")
+                window.localStorage.setItem(example_checkpoint, pickled_data_b64)
+
     while running:
         main_menu_title = TextButton(
             game.screen.get_width() / 12,

@@ -20,7 +20,7 @@ from game.game import Game
 
 from pygame_screen_record import ScreenRecorder
 
-browser = True if sys.platform == "emscripten" else False
+browser = sys.platform == "emscripten"
 
 
 async def eval_genomes(genomes: list[Any], config, game: Game, render: bool):

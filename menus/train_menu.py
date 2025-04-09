@@ -10,7 +10,7 @@ import pickle
 import sys
 from menus.checkpoint_menu import checkpoint_menu
 
-browser = True if sys.platform == "emscripten" else False
+browser = sys.platform == "emscripten"
 if browser:
     from platform import window  # type: ignore[attr-defined]
 
@@ -48,7 +48,7 @@ async def train_menu(game: Game):
         amount_spaces = (len(checkpoint_text) - 1) - len(str(current_checkpoint))
         amount_spaces = int(amount_spaces / 2)
         checkpoint_text = (
-            checkpoint_text + ' ' * amount_spaces + str(current_checkpoint)
+            checkpoint_text + " " * amount_spaces + str(current_checkpoint)
         )
         checkpoint_select_button = TextButton(
             game.screen.get_width() / 20,
